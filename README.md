@@ -5,8 +5,8 @@ Algorithms for removing background and noise from gamma-ray spectra.
 
 # Roadmap
 
-- [ ] Build datasimulated
+- [ ] Build simulated datasets based on real detector properties
 - [ ] Experiment with Deep Learning models
-- [ ] Experiment with Convex programming
+- [ ] Experiment with Convex Optimization 
 - [ ] Compare results of both approaches
 
