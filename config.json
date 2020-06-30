@@ -1,0 +1,8 @@
+{"DETECTORS": {"GERMANIUM": {"ENER_FIT": [0.00, 1.25], "NUM_CHANNELS": 1024, 
+                             "SMOOTH_PARAMS": [2.73405721e+00,7.30409309e-02,3.68774012e-11]}, 
+                             "EFFICIENCY": {"LOW": {"COEFS":[-5.28E-01, 1.48E-02, -1.83E-05], "MAX_KEV": 121}, 
+                                            "HIGH": {"COEFS":[1.55, -5.1E-03, 7.05E-06, -4.41E-09, 1.03E-12], "MAX_KEV": 1400}}
+                            },
+               "NAI":       {"ENER_FIT": ["0.00", "1.25"], "NUM_CHANNELS": "1024"},
+               "CZT":       {"ENER_FIT": ["0.00", "1.25"], "NUM_CHANNELS": "1024"}
+}
