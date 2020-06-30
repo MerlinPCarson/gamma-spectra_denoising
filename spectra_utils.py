@@ -6,24 +6,52 @@ import scipy.stats
 import functools
 import numpy as np
 
+# incase of no graphical display (e.g. SSH)
+import matplotlib
+if not os.environ.get('DISPLAY', '').strip():
+    matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-def load_radionuclide_nndc(root, rn):
+def split_radionuclide_name(rn_name):
     # split numeric prefix from radionuclide name
     num_letter = re.compile("([0-9]+)([a-zA-Z]+)") 
-    rn_split = num_letter.match(rn).groups() 
+    return num_letter.match(rn_name).groups() 
+
+def plot_spectra(keV, intensity, rn, outdir, show_plot=False):
+
+    rn_num, rn_name = split_radionuclide_name(rn)
+
+    plt.figure(figsize=(20,10))
+    plt.plot(keV, intensity, label="${}^{"+rn_num+"}{"+rn_name+"}$ Template Spectrum", color='blue')
+    
+    ax = plt.gca()
+    ax.set_xlabel('Energy (keV)', fontsize=18, fontweight='bold', fontname='cmtt10')
+    ax.set_ylabel('Intensity', fontsize=18, fontweight='bold', fontname='cmtt10')
+    ax.set_xticks(np.arange(keV[0], keV[-1], 50))
+    ax.set_xticks(np.arange(keV[0], keV[-1], 10), minor=True)
+    ax.grid(axis='x', which='major', alpha=0.5)
+    ax.grid(axis='x', which='minor', alpha=0.2)
+
+    plt.legend(fancybox=True, shadow=True, fontsize=11)
+    plt.tight_layout()
+    plt.savefig(os.path.join(outdir, rn) + '.png', format='png')
+
+    if show_plot:
+        plt.show()
+
+    plt.close()
+
+def load_radionuclide_nndc(root, rn):
+
+    rn_num, rn_name = split_radionuclide_name(rn)
 
     # build path for location of NNDC values for radionuclide
-    loc = os.path.join(root, rn_split[0], rn_split[1] + '.json')
+    loc = os.path.join(root, rn_num, rn_name + '.json')
 
     # load radionuclide NNDC table values
     with open(loc, 'r') as rn_nndc_file:
-        try:
-            radionuclide = json.load(rn_nndc_file)
-        except:
-            sys.stderr.write(f"** Error loading NNDC table for {rn} in file {loc}\n")
-            raise
+        radionuclide = json.load(rn_nndc_file)
 
     return radionuclide['keV'], radionuclide['intensity']
 

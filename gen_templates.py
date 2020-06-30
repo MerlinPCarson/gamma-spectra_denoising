@@ -6,7 +6,7 @@ import argparse
 import numpy as np
 from tqdm import tqdm
 
-from spectra_utils import load_radionuclide_nndc, generate_spectrum
+from spectra_utils import load_radionuclide_nndc, generate_spectrum, plot_spectra
 
 
 def load_nndc_tables(nndc_dir, radionuclides):
@@ -18,17 +18,17 @@ def load_nndc_tables(nndc_dir, radionuclides):
         nndc_tables[rn] = {"keV": keV, "intensity": intensity}
         
     return nndc_tables
-
-    
     
 
-def generate_templates(config, nndc_tables):
+def generate_templates(config, nndc_tables, outdir, savefigs):
 
     templates = {}
     for rn_name, rn_values in tqdm(nndc_tables.items()):
         #print(f"building template for {rn_name}")
         keV, intensity = generate_spectrum(rn_values, config)
         templates[rn_name] = {"keV": keV, "intensity": intensity}
+        if savefigs:
+            plot_spectra(keV, intensity, rn_name, outdir)
 
     return templates
         
@@ -43,6 +43,7 @@ def main():
     #parser.add_argument("-det", "--dettype", help="detector type", default="GERMANIUM,NAI,CZT")
     parser.add_argument("-det", "--dettype", help="detector type", default="GERMANIUM")
     parser.add_argument("-nndc", "--nndctables", help="location of NNDC tables data",  default="nuclides-nndc")
+    parser.add_argument("-sf", "--savefigs", help="saves plots of templates", default=True)
     arg = parser.parse_args()
 
     # load configuration parameters
@@ -58,7 +59,7 @@ def main():
     for dettype in arg.dettype.split(','):
         print(f'Generating templates for detector {dettype}')
         os.makedirs(os.path.join(arg.outdir, dettype), exist_ok=True)
-        templates = generate_templates(config["DETECTORS"][dettype], nndc_tables)
+        templates = generate_templates(config["DETECTORS"][dettype], nndc_tables, os.path.join(arg.outdir, dettype), arg.savefigs)
         #save_template(dettype, templates)
 
     print(f'Script completed in {time.time()-start:.2f} secs')
