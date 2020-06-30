@@ -63,6 +63,11 @@ def generate_spectrum(rn_table, config):
     keV = np.linspace(min_keV, max_keV, config["NUM_CHANNELS"])
     intensity = np.zeros(keV.shape)
 
+    assert len(rn_table["keV"]) == len(rn_table["intensity"]), "Mismatch in number of energy and intensity values!"
+
+    # account for detector efficiency
+    rn_table["intensity"] = apply_efficiency_curve(rn_table["keV"], rn_table["intensity"], config['EFFICIENCY'])
+
     for k, i in zip(rn_table["keV"], rn_table["intensity"]):
 
         # check bounds 
@@ -73,13 +78,37 @@ def generate_spectrum(rn_table, config):
         ki = min(ki, keV.shape[0]-1)
         intensity[ki] += i
 
-    # account for detector efficiency before adding compton
-    #spectrum = apply_efficiency_curves(spectrum_keV, spectrum, det_type)
-
+    # account for detector efficiency
+    #intensity = apply_efficiency_curve(keV, intensity, config['EFFICIENCY'])
         
     intensity = data_smooth(keV, intensity, **config['SMOOTH_PARAMS'])
 
     return keV, intensity
+
+
+def apply_efficiency_curve(keV, intensity, eff_vals):
+
+    assert len(keV) == len(intensity), "Mismatch in number of energy and intensity values!"
+
+    for n, (k, i) in enumerate(zip(keV, intensity)):
+        if 0 <= k < eff_vals['LOW']['MAX_KEV']:
+            intensity[n] = apply_efficiency(k, i, eff_vals['LOW'])
+        elif eff_vals['LOW']['MAX_KEV'] <= k < eff_vals['HIGH']['MAX_KEV']:
+            intensity[n] = apply_efficiency(k, i, eff_vals['HIGH'])
+        else:
+            intensity[n] = 0
+
+    return np.clip(intensity, a_min=0, a_max=None)
+
+
+def apply_efficiency(keV, intensity, eff_vals):
+
+    efficiency = 0
+    for coeff, pwr in zip(eff_vals['COEFS'], eff_vals['POWERS']):
+        efficiency += coeff*keV**pwr
+
+    return intensity * efficiency
+
 
 
 def data_smooth_get_std(kev, k0=3.458, k1=0.28, k2=0):

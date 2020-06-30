@@ -1,7 +1,7 @@
 {
  "RADIONUCLIDES": ["22Na", "51Cr", "56Mn", "59Fe", "57Co", "60Co", "64Cu", "66Ga", "67Ga", "68Ga", "75Se", "85Sr", "103Ru", 
                    "111In", "123I", "131I", "137Cs", "133Ba", "144Ce", "153Sm", "166Ho", "169Yb", "192Ir", "201Tl", "207Bi", "241Am", "152Eu"],
- "DETECTORS": {"GERMANIUM": {"ENER_FIT": [0.00, 1.5], "NUM_CHANNELS": 1024, 
+ "DETECTORS": {"HPGE": {"ENER_FIT": [0.00, 1.5], "NUM_CHANNELS": 1024, 
                              "SMOOTH_PARAMS": {"k0": 2.73405721e+00, "k1": 7.30409309e-02, "k2": 3.68774012e-11}, 
                              "EFFICIENCY": {"LOW": {"COEFS":[-5.28E-01, 1.48E-02, -1.83E-05],"POWERS": [0, 1, 2], "MAX_KEV": 121.8}, 
                                             "HIGH": {"COEFS":[1.55, -5.1E-03, 7.05E-06, -4.41E-09, 1.03E-12], "POWERS": [0, 1, 2, 3, 4], "MAX_KEV": 1400}}

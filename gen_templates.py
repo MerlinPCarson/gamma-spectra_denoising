@@ -40,8 +40,8 @@ def main():
     parser.add_argument("-rl", "--rnlistfile", help="file containing list of radionuclides to use", default="ANSI_N42.34.json")
     parser.add_argument("-cf", "--configfile", help="configuration file for generating data", default="config_data.json")
     parser.add_argument("-out", "--outdir", help="output dir for data", default="data")
-    #parser.add_argument("-det", "--dettype", help="detector type", default="GERMANIUM,NAI,CZT")
-    parser.add_argument("-det", "--dettype", help="detector type", default="GERMANIUM")
+    #parser.add_argument("-det", "--dettype", help="detector type", default="HPGe,NaI,CZT")
+    parser.add_argument("-det", "--dettype", help="detector type", default="HPGe")
     parser.add_argument("-nndc", "--nndctables", help="location of NNDC tables data",  default="nuclides-nndc")
     parser.add_argument("-sf", "--savefigs", help="saves plots of templates", default=False)
     arg = parser.parse_args()
@@ -57,6 +57,7 @@ def main():
     nndc_tables = load_nndc_tables(arg.nndctables, config["RADIONUCLIDES"])
 
     for dettype in arg.dettype.split(','):
+        dettype = dettype.upper()
         print(f'Generating templates for detector {dettype}')
         os.makedirs(os.path.join(arg.outdir, dettype), exist_ok=True)
         templates = generate_templates(config["DETECTORS"][dettype], nndc_tables, os.path.join(arg.outdir, dettype), arg.savefigs)
