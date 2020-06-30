@@ -43,7 +43,7 @@ def main():
     #parser.add_argument("-det", "--dettype", help="detector type", default="GERMANIUM,NAI,CZT")
     parser.add_argument("-det", "--dettype", help="detector type", default="GERMANIUM")
     parser.add_argument("-nndc", "--nndctables", help="location of NNDC tables data",  default="nuclides-nndc")
-    parser.add_argument("-sf", "--savefigs", help="saves plots of templates", default=True)
+    parser.add_argument("-sf", "--savefigs", help="saves plots of templates", default=False)
     arg = parser.parse_args()
 
     # load configuration parameters

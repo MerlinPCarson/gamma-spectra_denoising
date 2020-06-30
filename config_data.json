@@ -6,13 +6,13 @@
                              "EFFICIENCY": {"LOW": {"COEFS":[-5.28E-01, 1.48E-02, -1.83E-05],"POWERS": [0, 1, 2], "MAX_KEV": 121.8}, 
                                             "HIGH": {"COEFS":[1.55, -5.1E-03, 7.05E-06, -4.41E-09, 1.03E-12], "POWERS": [0, 1, 2, 3, 4], "MAX_KEV": 1400}}
                             },
-               "NAI":       {"ENER_FIT": ["0.00", "1.5"], "NUM_CHANNELS": "1024",
-                             "SMOOTH_PARAMS": {"k0": 2.73405721e+00, "k1": 7.30409309e-02, "k2": 3.68774012e-11}, 
+               "NAI":       {"ENER_FIT": [0.00, 1.5], "NUM_CHANNELS": 1024,
+                             "SMOOTH_PARAMS": {"k0": 0.0237e+2, "k1": 2.7351, "k2":0}, 
                              "EFFICIENCY": {"LOW": {"COEFS":[0.5641, 0.0036], "POWERS": [0, 1], "MAX_KEV": 121.8}, 
                                             "HIGH": {"COEFS":[8.9946], "POWERS": [-0.462], "MAX_KEV": 1400}}
                             },
-               "CZT":       {"ENER_FIT": ["0.00", "1.5"], "NUM_CHANNELS": "1024",
-                             "SMOOTH_PARAMS": {"k0": 2.73405721e+00, "k1": 7.30409309e-02, "k2": 3.68774012e-11}, 
+               "CZT":       {"ENER_FIT": [0.00, 1.5], "NUM_CHANNELS": 1024,
+                             "SMOOTH_PARAMS": {"k0": 4.6, "k1": 0.5, "k2": 4e-2}, 
                              "EFFICIENCY": {"LOW": {"COEFS":[-0.107368019199466, 0.009144244584453], "POWERS": [0, 1], "MAX_KEV": 121.8}, 
                                             "HIGH": {"COEFS":[1.970310450111, -0.009921241676, 1.69133231E-05, -9.507841977E-09], "POWERS": [0, 1, 2, 3], "MAX_KEV": 1400}}
                             }
