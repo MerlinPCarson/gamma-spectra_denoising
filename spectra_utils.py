@@ -6,6 +6,8 @@ import scipy.stats
 import functools
 import numpy as np
 
+from compton import compton_continuum
+
 # incase of no graphical display (e.g. SSH)
 import matplotlib
 if not os.environ.get('DISPLAY', '').strip():
@@ -42,6 +44,31 @@ def plot_spectra(keV, intensity, rn, outdir, show_plot=False):
 
     plt.close()
 
+def plot_noisy_spectra(keV, spectrum, noisy_spectrum, rn, outdir, show_plot=False):
+
+    rn_num, rn_name = split_radionuclide_name(rn)
+
+    plt.figure(figsize=(20,10))
+    plt.plot(keV, spectrum, label="${}^{"+rn_num+"}{"+rn_name+"}$ Target Spectrum", color='blue')
+    plt.plot(keV, noisy_spectrum, label="${}^{"+rn_num+"}{"+rn_name+"}$ Noisy Spectrum", color='red')
+    
+    ax = plt.gca()
+    ax.set_xlabel('Energy (keV)', fontsize=18, fontweight='bold', fontname='cmtt10')
+    ax.set_ylabel('Intensity', fontsize=18, fontweight='bold', fontname='cmtt10')
+    ax.set_xticks(np.arange(keV[0], keV[-1], 50))
+    ax.set_xticks(np.arange(keV[0], keV[-1], 10), minor=True)
+    ax.grid(axis='x', which='major', alpha=0.5)
+    ax.grid(axis='x', which='minor', alpha=0.2)
+
+    plt.legend(fancybox=True, shadow=True, fontsize=11)
+    plt.tight_layout()
+    plt.savefig(os.path.join(outdir, rn) + '-noisy.png', format='png')
+
+    if show_plot:
+        plt.show()
+
+    plt.close()
+
 def load_radionuclide_nndc(root, rn):
 
     rn_num, rn_name = split_radionuclide_name(rn)
@@ -56,34 +83,49 @@ def load_radionuclide_nndc(root, rn):
     return radionuclide['keV'], radionuclide['intensity']
 
 
-def generate_spectrum(rn_table, config):
+def generate_spectrum(rn_table, config, compton_scale=-1, min_efficiency=50):
+
+    # create data structure and stats for spectram
     min_keV = config["ENER_FIT"][0]
     bucket_size = config["ENER_FIT"][1]
     max_keV = bucket_size * (config["NUM_CHANNELS"]-1) + min_keV
-    keV = np.linspace(min_keV, max_keV, config["NUM_CHANNELS"])
-    intensity = np.zeros(keV.shape)
+    spectrum_keV = np.linspace(min_keV, max_keV, config["NUM_CHANNELS"])
+    spectrum = np.zeros_like(spectrum_keV)
+    compton = np.zeros_like(spectrum_keV)
+    #noise = np.zeros_like(spectrum_keV)
 
     assert len(rn_table["keV"]) == len(rn_table["intensity"]), "Mismatch in number of energy and intensity values!"
 
     # account for detector efficiency
-    rn_table["intensity"] = apply_efficiency_curve(rn_table["keV"], rn_table["intensity"], config['EFFICIENCY'])
+    peak_intensities = apply_efficiency_curve(rn_table["keV"], rn_table["intensity"], config['EFFICIENCY'])
 
-    for k, i in zip(rn_table["keV"], rn_table["intensity"]):
+    # load peak values into spectrum
+    for k, i in zip(rn_table["keV"], peak_intensities):
 
         # check bounds 
         if (k < min_keV) or (k >= max_keV + bucket_size):
             continue
 
-        ki = np.searchsorted(keV, k, side='right')-1
-        ki = min(ki, keV.shape[0]-1)
-        intensity[ki] += i
+        ki = np.searchsorted(spectrum_keV, k, side='right')-1
+        ki = min(ki, spectrum_keV.shape[0]-1)
+        spectrum[ki] += i
 
-    # account for detector efficiency
-    #intensity = apply_efficiency_curve(keV, intensity, config['EFFICIENCY'])
+    # generate compton for each peak
+    if compton_scale > 0:
+       for ke, i in zip(rn_table["keV"], peak_intensities):
+           # don't add compton to templates for PE above keV vals in spectrum or below min efficiency
+           if (ke >= spectrum_keV[-1] + bucket_size) or (ke < min_efficiency):
+               continue
+           # find new intensity given detecotr efficiency
+           ki = np.searchsorted(spectrum_keV, ke, side='right')-1
+           ki = min(ki, spectrum_keV.shape[0]-1)
+           i = spectrum[ki]
+           compton += compton_continuum(ke, i, spectrum_keV, spectrum, compton_scale, config["ATOMIC_NUM"])
         
-    intensity = data_smooth(keV, intensity, **config['SMOOTH_PARAMS'])
+    spectrum = data_smooth(spectrum_keV, spectrum, **config['SMOOTH_PARAMS'])
+    noisy_spectrum = spectrum + compton 
 
-    return keV, intensity
+    return spectrum_keV, spectrum, noisy_spectrum 
 
 
 def apply_efficiency_curve(keV, intensity, eff_vals):
@@ -111,14 +153,8 @@ def apply_efficiency(keV, intensity, eff_vals):
 
 
 
-def data_smooth_get_std(kev, k0=3.458, k1=0.28, k2=0):
-    """Returns the standard deviation for smoothing at kev.
-
-    Assumes default parameters on data_smooth.
-    """
-    # 0.5 would be 99% confidence, want that divided by 3.
-    return 0.2 * (k0 + k1 * kev ** 0.5 + k2 * kev)
-
+# The following smoothing code is
+# CONTRIBUTED BY: Walt Woods
 
 def data_smooth(kev, hits, k0=3.458, k1=0.28, k2=0):
     """Applies kernel smoothing to the given kev, hits records.  Assumes a
@@ -169,6 +205,13 @@ def data_smooth(kev, hits, k0=3.458, k1=0.28, k2=0):
     #    raise ValueError("HU")
     return smooth_hits
 
+def data_smooth_get_std(kev, k0=3.458, k1=0.28, k2=0):
+    """Returns the standard deviation for smoothing at kev.
+
+    Assumes default parameters on data_smooth.
+    """
+    # 0.5 would be 99% confidence, want that divided by 3.
+    return 0.2 * (k0 + k1 * kev ** 0.5 + k2 * kev)
 
 @functools.lru_cache(maxsize=10000)
 def _data_smooth_cdf_range(keV, k0, k1, k2, keV_spectrum):

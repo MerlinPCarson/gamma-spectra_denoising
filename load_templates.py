@@ -5,7 +5,7 @@ import argparse
 
 
 def show_hierarchy(datafile):
-    with h5py.File('data/templates.h5', 'r') as h5f:
+    with h5py.File(datafile, 'r') as h5f:
         for k in h5f.keys():
             print(f'{k}: {len(h5f[k])} nuclides')
             for k2 in h5f[k].keys():
