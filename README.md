@@ -21,3 +21,5 @@ Algorithms for removing background and noise from gamma-ray spectra.
 - [ ] Experiment with Convex Optimization 
 - [ ] Compare results of both approaches
 
+## License
+This work is released under MIT license.
