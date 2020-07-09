@@ -38,27 +38,35 @@ def generate_spectra(config, nndc_tables, outdir, savefigs, params):
     return spectra 
         
 def save_dataset(dettype, dataset, outfile):
-    with h5py.File(outfile, 'w') as h5f:
-        h5f.create_group(dettype)
+    with h5py.File(outfile, 'a') as h5f:
+        try:
+            h5f.create_group(dettype)
+        except:
+            pass
         for k, v in dataset.items():
-            h5f[dettype].create_dataset(k, data=v)
+            try:
+                h5f[dettype].create_dataset(k, data=v)
+            except:
+                del h5f[dettype][k]
+                h5f[dettype].create_dataset(k, data=v)
+                #data = h5f[dettype][k] 
+                #data[...]= v 
 
 
 def main():
     start = time.time()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-rl", "--rnlistfile", help="file containing list of radionuclides to use", default="ANSI_N42.34.json")
     parser.add_argument("-cf", "--configfile", help="configuration file for generating data", default="config_data.json")
     parser.add_argument("-out", "--outfile", help="output file for data", default="data/training.h5")
     #parser.add_argument("-det", "--dettype", help="detector type", default="HPGe,NaI,CZT")
     parser.add_argument("-det", "--dettype", help="detector type", default="HPGe")
     parser.add_argument("-nndc", "--nndctables", help="location of NNDC tables data",  default="nuclides-nndc")
     parser.add_argument("-sf", "--savefigs", help="saves plots of templates", action="store_true")
-    parser.add_argument("-mn", "--maxnoise", help="maximum noise scale", default=1.0)
-    parser.add_argument("-nn", "--numnoise", help="number of noise scales between 0.0 and max noise scale", default=10)
-    parser.add_argument("-mc", "--maxcompton", help="maximum compton sacle", default=0.5)
-    parser.add_argument("-nc", "--numcompton", help="number of compton scales between 0.0 and max compton scale", default=10)
+    parser.add_argument("-mn", "--maxnoise", help="maximum noise scale", default=1.0, type=int)
+    parser.add_argument("-nn", "--numnoise", help="number of noise scales between 0.0 and max noise scale", default=10, type=int)
+    parser.add_argument("-mc", "--maxcompton", help="maximum compton sacle", default=0.5, type=int)
+    parser.add_argument("-nc", "--numcompton", help="number of compton scales between 0.0 and max compton scale", default=10, type=int)
     arg = parser.parse_args()
 
     outdir = os.path.dirname(arg.outfile)
