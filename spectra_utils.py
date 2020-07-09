@@ -20,7 +20,7 @@ def split_radionuclide_name(rn_name):
     num_letter = re.compile("([0-9]+)([a-zA-Z]+)") 
     return num_letter.match(rn_name).groups() 
 
-def plot_spectra(keV, intensity, rn, outdir, show_plot=False):
+def plot_spectrum(keV, intensity, rn, outdir, show_plot=False):
 
     rn_num, rn_name = split_radionuclide_name(rn)
 
@@ -44,7 +44,7 @@ def plot_spectra(keV, intensity, rn, outdir, show_plot=False):
 
     plt.close()
 
-def plot_noisy_spectra(keV, spectrum, noisy_spectrum, rn, outdir, show_plot=False):
+def compare_spectra(keV, spectrum, noisy_spectrum, rn, outdir, show_plot=False):
 
     rn_num, rn_name = split_radionuclide_name(rn)
 
@@ -83,7 +83,7 @@ def load_radionuclide_nndc(root, rn):
     return radionuclide['keV'], radionuclide['intensity']
 
 
-def generate_spectrum(rn_table, config, compton_scale=-1, min_efficiency=50, alpha=0.0035, noise_scale=-1):
+def generate_spectrum(rn_table, config, compton_scale=0.0, min_efficiency=50, alpha=0.0035, noise_scale=0.0):
 
     # create data structure and stats for spectram
     min_keV = config["ENER_FIT"][0]

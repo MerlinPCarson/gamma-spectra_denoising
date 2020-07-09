@@ -7,7 +7,7 @@ import argparse
 import numpy as np
 from tqdm import tqdm
 
-from spectra_utils import load_radionuclide_nndc, generate_spectrum, plot_spectra, plot_noisy_spectra
+from spectra_utils import load_radionuclide_nndc, generate_spectrum, compare_spectra
 
 
 def load_nndc_tables(nndc_dir, radionuclides):
@@ -21,16 +21,17 @@ def load_nndc_tables(nndc_dir, radionuclides):
     return nndc_tables
     
 
-def generate_spectra(config, nndc_tables, outdir, savefigs, compton_scale=0.5):
+def generate_spectra(config, nndc_tables, outdir, savefigs, params):
 
     spectra = {"spectrum": [], "noisy_spectrum": []} 
     for rn_name, rn_values in tqdm(nndc_tables.items()):
-        #print(f"building template for {rn_name}")
-        spectrum_keV, spectrum, noisy_spectrum = generate_spectrum(rn_values, config, compton_scale=compton_scale)
-        spectra["spectrum"].append(spectrum)
-        spectra["noisy_spectrum"].append(noisy_spectrum)
-        if savefigs:
-            plot_noisy_spectra(spectrum_keV, spectrum, noisy_spectrum, rn_name, outdir, show_plot=False)
+        #print(f"building spectra for {rn_name}")
+        for compton_scale, noise_scale in params:
+            spectrum_keV, spectrum, noisy_spectrum = generate_spectrum(rn_values, config, compton_scale=compton_scale, noise_scale=noise_scale)
+            spectra["spectrum"].append(spectrum)
+            spectra["noisy_spectrum"].append(noisy_spectrum)
+            if savefigs:
+                compare_spectra(spectrum_keV, spectrum, noisy_spectrum, rn_name, outdir, show_plot=False)
 
     spectra["keV"] = spectrum_keV
 
@@ -41,14 +42,6 @@ def save_dataset(dettype, dataset, outfile):
         h5f.create_group(dettype)
         for k, v in dataset.items():
             h5f[dettype].create_dataset(k, data=v)
-        
-
- #           for k2, v2 in v.items():
- #               try:
- #                   h5f[dettype][k].create_dataset(k2, data=v2)
- #               except: # overwrites existing data if data already exists
- #                   data = h5f[dettype][k][k2] 
- #                   data[...]= v2 
 
 
 def main():
@@ -62,6 +55,10 @@ def main():
     parser.add_argument("-det", "--dettype", help="detector type", default="HPGe")
     parser.add_argument("-nndc", "--nndctables", help="location of NNDC tables data",  default="nuclides-nndc")
     parser.add_argument("-sf", "--savefigs", help="saves plots of templates", action="store_true")
+    parser.add_argument("-mn", "--maxnoise", help="maximum noise scale", default=1.0)
+    parser.add_argument("-nn", "--numnoise", help="number of noise scales between 0.0 and max noise scale", default=10)
+    parser.add_argument("-mc", "--maxcompton", help="maximum compton sacle", default=0.5)
+    parser.add_argument("-nc", "--numcompton", help="number of compton scales between 0.0 and max compton scale", default=10)
     arg = parser.parse_args()
 
     outdir = os.path.dirname(arg.outfile)
@@ -77,12 +74,18 @@ def main():
     # load NNDC tables for radionuclides
     nndc_tables = load_nndc_tables(arg.nndctables, config["RADIONUCLIDES"])
 
+    # determines size of dataset based on number of noise and compton scales
+    noise_scales = np.linspace(0,arg.maxnoise,arg.numnoise)
+    compton_scales = np.linspace(0,arg.maxcompton,arg.numcompton)
+
+    params = [(compton, noise) for compton in compton_scales for noise in noise_scales]
+
     for dettype in arg.dettype.split(','):
         dettype = dettype.upper()
         print(f'Generating templates for detector {dettype}')
         if arg.savefigs:
             os.makedirs(os.path.join(outdir, dettype), exist_ok=True)
-        dataset = generate_spectra(config["DETECTORS"][dettype], nndc_tables, os.path.join(outdir, dettype), arg.savefigs)
+        dataset = generate_spectra(config["DETECTORS"][dettype], nndc_tables, os.path.join(outdir, dettype), arg.savefigs, params)
         save_dataset(dettype, dataset, outfile)
 
     print(f'Script completed in {time.time()-start:.2f} secs')
