@@ -50,7 +50,7 @@ def plot_noisy_spectra(keV, spectrum, noisy_spectrum, rn, outdir, show_plot=Fals
 
     plt.figure(figsize=(20,10))
     plt.plot(keV, spectrum, label="${}^{"+rn_num+"}{"+rn_name+"}$ Target Spectrum", color='blue')
-    plt.plot(keV, noisy_spectrum, label="${}^{"+rn_num+"}{"+rn_name+"}$ Noisy Spectrum", color='red')
+    plt.plot(keV, noisy_spectrum, alpha=0.5, label="${}^{"+rn_num+"}{"+rn_name+"}$ Noisy Spectrum", color='red')
     
     ax = plt.gca()
     ax.set_xlabel('Energy (keV)', fontsize=18, fontweight='bold', fontname='cmtt10')
@@ -83,7 +83,7 @@ def load_radionuclide_nndc(root, rn):
     return radionuclide['keV'], radionuclide['intensity']
 
 
-def generate_spectrum(rn_table, config, compton_scale=-1, min_efficiency=50):
+def generate_spectrum(rn_table, config, compton_scale=-1, min_efficiency=50, alpha=0.0035, noise_scale=-1):
 
     # create data structure and stats for spectram
     min_keV = config["ENER_FIT"][0]
@@ -92,7 +92,7 @@ def generate_spectrum(rn_table, config, compton_scale=-1, min_efficiency=50):
     spectrum_keV = np.linspace(min_keV, max_keV, config["NUM_CHANNELS"])
     spectrum = np.zeros_like(spectrum_keV)
     compton = np.zeros_like(spectrum_keV)
-    #noise = np.zeros_like(spectrum_keV)
+    noise = np.zeros_like(spectrum_keV)
 
     assert len(rn_table["keV"]) == len(rn_table["intensity"]), "Mismatch in number of energy and intensity values!"
 
@@ -110,6 +110,9 @@ def generate_spectrum(rn_table, config, compton_scale=-1, min_efficiency=50):
         ki = min(ki, spectrum_keV.shape[0]-1)
         spectrum[ki] += i
 
+    # normalize spectrum by RMS
+    spectrum /= np.sqrt(np.sum(spectrum**2))
+
     # generate compton for each peak
     if compton_scale > 0:
        for ke, i in zip(rn_table["keV"], peak_intensities):
@@ -121,11 +124,25 @@ def generate_spectrum(rn_table, config, compton_scale=-1, min_efficiency=50):
            ki = min(ki, spectrum_keV.shape[0]-1)
            i = spectrum[ki]
            compton += compton_continuum(ke, i, spectrum_keV, spectrum, compton_scale, config["ATOMIC_NUM"])
-        
-    spectrum = data_smooth(spectrum_keV, spectrum, **config['SMOOTH_PARAMS'])
-    noisy_spectrum = spectrum + compton 
 
-    return spectrum_keV, spectrum, noisy_spectrum 
+    smooth_spectrum = data_smooth(spectrum_keV, spectrum, **config['SMOOTH_PARAMS'])
+
+    if noise_scale > 0:
+        # generate exponential decay curve for noise distribution
+        noise_slope = np.exp(-alpha*spectrum_keV)
+        noise = np.random.poisson(noise_slope).astype(np.float32)
+
+        # scale noise by detector efficency
+        noise = np.clip(apply_efficiency_curve(spectrum_keV, noise, config['EFFICIENCY']),a_min=0.0,a_max=None)
+
+        # normalize noise by RMS and scale
+        noise /= np.sqrt(np.sum(noise**2))
+        noise *= noise_scale
+
+    # smooth spectrum with compton and noise
+    noisy_spectrum = data_smooth(spectrum_keV, spectrum+compton+noise, **config['SMOOTH_PARAMS'])
+
+    return spectrum_keV, smooth_spectrum, noisy_spectrum 
 
 
 def apply_efficiency_curve(keV, intensity, eff_vals):
@@ -150,7 +167,6 @@ def apply_efficiency(keV, intensity, eff_vals):
         efficiency += coeff*keV**pwr
 
     return intensity * efficiency
-
 
 
 # The following smoothing code is
