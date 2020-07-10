@@ -63,9 +63,11 @@ def main():
     parser.add_argument("-det", "--dettype", help="detector type", default="HPGe")
     parser.add_argument("-nndc", "--nndctables", help="location of NNDC tables data",  default="nuclides-nndc")
     parser.add_argument("-sf", "--savefigs", help="saves plots of templates", action="store_true")
-    parser.add_argument("-mn", "--maxnoise", help="maximum noise scale", default=1.0, type=int)
+    parser.add_argument("-maxn", "--maxnoise", help="maximum noise scale", default=1.0, type=float)
+    parser.add_argument("-minn", "--minnoise", help="minimum noise scale", default=0.1, type=float)
     parser.add_argument("-nn", "--numnoise", help="number of noise scales between 0.0 and max noise scale", default=10, type=int)
-    parser.add_argument("-mc", "--maxcompton", help="maximum compton sacle", default=0.5, type=int)
+    parser.add_argument("-maxc", "--maxcompton", help="maximum compton sacle", default=0.5, type=float)
+    parser.add_argument("-minc", "--mincompton", help="minimum compton sacle", default=0.1, type=float)
     parser.add_argument("-nc", "--numcompton", help="number of compton scales between 0.0 and max compton scale", default=10, type=int)
     arg = parser.parse_args()
 
@@ -83,8 +85,8 @@ def main():
     nndc_tables = load_nndc_tables(arg.nndctables, config["RADIONUCLIDES"])
 
     # determines size of dataset based on number of noise and compton scales
-    noise_scales = np.linspace(0,arg.maxnoise,arg.numnoise)
-    compton_scales = np.linspace(0,arg.maxcompton,arg.numcompton)
+    noise_scales = np.linspace(arg.minnoise, arg.maxnoise, arg.numnoise)
+    compton_scales = np.linspace(arg.mincompton, arg.maxcompton, arg.numcompton)
 
     params = [(compton, noise) for compton in compton_scales for noise in noise_scales]
 
