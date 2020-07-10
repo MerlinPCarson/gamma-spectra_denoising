@@ -29,11 +29,9 @@ def setup_gpus():
     return device_ids
 
 def psnr_of_batch(clean_imgs, denoised_imgs):
-    clean_imgs = clean_imgs.data.numpy().astype(np.float32)
-    denoised_imgs = denoised_imgs.data.cpu().numpy().astype(np.float32)
     batch_psnr = 0
     for i in range(clean_imgs.shape[0]):
-        batch_psnr += psnr(clean_imgs[i,:,:,:], denoised_imgs[i,:,:,:], data_range=1)
+        batch_psnr += psnr(clean_imgs[i,:], denoised_imgs[i,:], data_range=1)
     return batch_psnr/clean_imgs.shape[0]
 
 def main():
@@ -44,10 +42,11 @@ def main():
     parser.add_argument('--train_set', type=str, default='data/training.h5', help='h5 file with training vectors')
 #    parser.add_argument('--val_set', type=str, default='val.h5', help='h5 file with validation vectors')
     parser.add_argument('--batch_size', type=int, default=16, help='batch size for training')
-    parser.add_argument('--epochs', type=int, default=80, help='number of epochs')
+    parser.add_argument('--epochs', type=int, default=1000, help='number of epochs')
+    parser.add_argument('--patience', type=int, default=20, help='number of epochs of no improvment before early stopping')
     parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
 #    parser.add_argument('--lr_decay', type=float, default=0.94, help='learning rate decay factor')
-    parser.add_argument('--num_layers', type=int, default=5, help='number of CNN layers in network')
+    parser.add_argument('--num_layers', type=int, default=20, help='number of CNN layers in network')
     parser.add_argument('--num_filters', type=int, default=64, help='number of filters per CNN layer')
     parser.add_argument('--filter_size', type=int, default=3, help='size of filter for CNN layers')
     parser.add_argument('--stride', type=int, default=1, help='filter stride for CNN layers')
@@ -130,22 +129,23 @@ def main():
 
     # save model parameters
     history = {'model': model_params, 'train':[], 'val':[], 'psnr':[]}
-    pickle.dump(history, open(os.path.join(args.log_dir, 'model.npy'), 'wb'))
+    pickle.dump(history, open(os.path.join(args.model_dir, 'model.npy'), 'wb'))
 
 #    writer = SummaryWriter(args.log_dir)
-#
+
 #    # schedulers
-    scheduler = ReduceLROnPlateau(optimizer, 'min', verbose=True, patience=10)
+    scheduler = ReduceLROnPlateau(optimizer, 'min', verbose=True, patience=args.patience//2)
 #    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.lr_decay)
-#
+
 
     # intializiang best values for regularization via early stopping 
     best_val_loss = 99999
     best_psnr = 0
+    epochs_since_improvement = 0
 
     # Main training loop
     for epoch in range(args.epochs):
-        print(f'Starting epoch {epoch+1} with learning rate {optimizer.param_groups[0]["lr"]}')
+        print(f'Starting epoch {epoch+1}/{args.epochs} with learning rate {optimizer.param_groups[0]["lr"]}')
 
         model.train()
         epoch_train_loss = 0
@@ -163,7 +163,7 @@ def main():
 
             # calculate loss
             loss = criterion(preds, clean_spectra)/(2*len(noisy_spectra))
-            epoch_train_loss += loss.detach()
+            epoch_train_loss += loss.item()
 
             # backprop
             loss.backward()
@@ -186,11 +186,11 @@ def main():
 
                 # calculate loss
                 val_loss = criterion(preds, clean_spectra)/(2*len(noisy_spectra))
-                epoch_val_loss += val_loss.detach()
+                epoch_val_loss += val_loss.item()
 
-#                # calculate PSNR 
-#                epoch_psnr += psnr_of_batch(clean_spectra, preds)
-#
+                # calculate PSNR 
+                epoch_psnr += psnr_of_batch(clean_spectra.cpu().numpy().astype(np.float32), preds.cpu().numpy().astype(np.float32))
+
         # epoch summary
         epoch_train_loss /= len(train_loader) 
         epoch_val_loss /= len(val_loader) 
@@ -198,8 +198,8 @@ def main():
 
         # reduce learning rate if validation has leveled off
         scheduler.step(epoch_val_loss)
-#
-#        # exponential decay of learning rate
+
+        # exponential decay of learning rate
 #        scheduler.step()
 
         # save epoch stats
@@ -220,8 +220,15 @@ def main():
         if epoch_val_loss < best_val_loss:
             print('Saving best model')
             best_val_loss = epoch_val_loss
-            torch.save(model, os.path.join(args.log_dir, 'best_model.pt'))
-            pickle.dump(history, open(os.path.join(args.log_dir, 'best_model.npy'), 'wb'))
+            epochs_since_improvement = 0
+            torch.save(model.state_dict(), os.path.join(args.model_dir, 'best_model.pt'))
+            pickle.dump(history, open(os.path.join(args.model_dir, 'best_model.npy'), 'wb'))
+        else:
+            epochs_since_improvement += 1
+
+        if epochs_since_improvement > args.patience:
+            print('Initiating early stopping')
+            break
 #
 #        # test model and save results 
 #        if epoch % 5 == 0:
@@ -234,8 +241,8 @@ def main():
 #
     # saving final model
     print('Saving final model')
-    torch.save(model, os.path.join(args.log_dir, 'final_model.pt'))
-    pickle.dump(history, open(os.path.join(args.log_dir, 'final_model.npy'), 'wb'))
+    torch.save(model.state_dict(), os.path.join(args.model_dir, 'final_model.pt'))
+    pickle.dump(history, open(os.path.join(args.model_dir, 'final_model.npy'), 'wb'))
 
     print(f'Script completed in {time.time()-start:.2f} secs')
     return 0
