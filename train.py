@@ -19,7 +19,7 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 #from tensorboardX import SummaryWriter
 #from torchvision.utils import make_grid
-#from skimage.metrics import peak_signal_noise_ratio as psnr
+from skimage.metrics import peak_signal_noise_ratio as psnr
 
         
 def setup_gpus():
@@ -28,6 +28,14 @@ def setup_gpus():
     os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(map(str, device_ids))
     return device_ids
 
+def psnr_of_batch(clean_imgs, denoised_imgs):
+    clean_imgs = clean_imgs.data.numpy().astype(np.float32)
+    denoised_imgs = denoised_imgs.data.cpu().numpy().astype(np.float32)
+    batch_psnr = 0
+    for i in range(clean_imgs.shape[0]):
+        batch_psnr += psnr(clean_imgs[i,:,:,:], denoised_imgs[i,:,:,:], data_range=1)
+    return batch_psnr/clean_imgs.shape[0]
+
 def main():
     start = time.time()
 
@@ -35,7 +43,7 @@ def main():
     parser.add_argument('--det_type', type=str, default='HPGe', help='detector type to train {HPGe, NaI, CZT}')
     parser.add_argument('--train_set', type=str, default='data/training.h5', help='h5 file with training vectors')
 #    parser.add_argument('--val_set', type=str, default='val.h5', help='h5 file with validation vectors')
-    parser.add_argument('--batch_size', type=int, default=128, help='batch size for training')
+    parser.add_argument('--batch_size', type=int, default=16, help='batch size for training')
     parser.add_argument('--epochs', type=int, default=80, help='number of epochs')
     parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
 #    parser.add_argument('--lr_decay', type=float, default=0.94, help='learning rate decay factor')
@@ -66,6 +74,9 @@ def main():
     noisy_spectra = training_data[args.det_type.upper()]['noisy']
     clean_spectra = training_data[args.det_type.upper()]['clean']
 
+    noisy_spectra = np.expand_dims(noisy_spectra, axis=1)
+    clean_spectra = np.expand_dims(clean_spectra, axis=1)
+
     assert noisy_spectra.shape == clean_spectra.shape, 'Mismatch between shapes of training and target data'
 
     # applying random seed for reproducability
@@ -85,7 +96,7 @@ def main():
     x_val = (x_val-train_mean)/train_std
 
     # input shape for each example to network, NOTE: channels first
-    num_channels, num_features = 1, x_train.shape[1]
+    num_channels, num_features = 1, x_train.shape[2]
     print(f'Input shape to model forward will be: ({args.batch_size}, {num_channels}, {num_features})')
 
     # load data for training
@@ -124,138 +135,93 @@ def main():
 #    writer = SummaryWriter(args.log_dir)
 #
 #    # schedulers
-#    #scheduler = ReduceLROnPlateau(optimizer, 'min', verbose=True, patience=10)
+    scheduler = ReduceLROnPlateau(optimizer, 'min', verbose=True, patience=10)
 #    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.lr_decay)
 #
-#    # Main training loop
-#    best_val_loss = 999 
-#    best_psnr_normal = 0
-#    best_psnr_uniform = 0
-#    best_psnr_pepper = 0
-#    for epoch in range(args.epochs):
-#        print(f'Starting epoch {epoch+1} with learning rate {optimizer.param_groups[0]["lr"]}')
-#
-#        model.train()
-#        epoch_train_loss = 0
-#        train_steps = 0
-#
-#        # iterate through batches of training examples
-#        for clean_imgs in tqdm(train_loader):
-#            model.zero_grad()
-#
-#            # generate additive white noise from gaussian distribution
-#            # Model-S
-#            #noise = torch.FloatTensor(data.size()).normal_(mean=0, std=noise_level)
-#
-#            # Model-B
-#
-#            noise_type = np.random.choice(noise_types)
-#            noise = gen_noise(clean_imgs.size(), noise_type)
-#
-#            # pack input and target it into torch variable
-#            noisy_imgs = Variable((clean_imgs + noise).cuda()) 
-#            noise = Variable(noise.cuda())
-#
-#            # make predictions
-#            preds = model(torch.clamp(noisy_imgs, 0.0, 1.0))
-#
-#            # calculate loss
-#            loss = criterion(preds, noise)/(2*noisy_imgs.size()[0])
-#            epoch_train_loss += loss.detach()
-#
-#            # backprop
-#            loss.backward()
-#            optimizer.step()
-#
-#            train_steps += 1
-#
-#        # start evaluation
-#        model.eval() 
-#        print(f'Validating Model')
-#        epoch_val_loss = 0
-#        epoch_psnr_normal = 0
-#        num_normal = 0
-#        epoch_psnr_uniform = 0
-#        num_uniform = 0
-#        epoch_psnr_pepper = 0
-#        num_pepper = 0
-#        val_steps = 0
-#        with torch.no_grad():
-#            for clean_imgs in tqdm(val_loader):
-#                # generate additive white noise from gaussian distribution
-#                # DnCNN-S
-#                #noise = torch.FloatTensor(data.size()).normal_(mean=0, std=noise_level)
-#
-#                # DnCNN-M
-#                noise_type = np.random.choice(noise_types)
-#                noise = gen_noise(clean_imgs.size(), noise_type)
-#
-#
-#                # pack input and target it into torch variable
-#                noisy_imgs = Variable((clean_imgs + noise).cuda())
-#                noise = Variable(noise.cuda())
-#
-#                # make predictions
-#                preds = model(torch.clamp(noisy_imgs,0.0,1.0))
-#
-#                # calculate loss
-#                val_loss = criterion(preds, noise)/(2*noisy_imgs.size()[0])
-#                epoch_val_loss += val_loss.detach()
-#
+
+    # intializiang best values for regularization via early stopping 
+    best_val_loss = 99999
+    best_psnr = 0
+
+    # Main training loop
+    for epoch in range(args.epochs):
+        print(f'Starting epoch {epoch+1} with learning rate {optimizer.param_groups[0]["lr"]}')
+
+        model.train()
+        epoch_train_loss = 0
+
+        # iterate through batches of training examples
+        for noisy_spectra, clean_spectra in tqdm(train_loader):
+            model.zero_grad()
+
+            # move batch to GPU
+            noisy_spectra = Variable(noisy_spectra.cuda())
+            clean_spectra = Variable(clean_spectra.cuda())
+
+            # make predictions
+            preds = model(noisy_spectra)
+
+            # calculate loss
+            loss = criterion(preds, clean_spectra)/(2*len(noisy_spectra))
+            epoch_train_loss += loss.detach()
+
+            # backprop
+            loss.backward()
+            optimizer.step()
+
+        # start evaluation
+        print(f'Validating Model')
+        model.eval() 
+        epoch_val_loss = 0
+        epoch_psnr = 0
+        with torch.no_grad():
+            for noisy_spectra, clean_spectra in tqdm(val_loader):
+
+                # move batch to GPU
+                noisy_spectra = Variable(noisy_spectra.cuda())
+                clean_spectra = Variable(clean_spectra.cuda())
+
+                # make predictions
+                preds = model(noisy_spectra)
+
+                # calculate loss
+                val_loss = criterion(preds, clean_spectra)/(2*len(noisy_spectra))
+                epoch_val_loss += val_loss.detach()
+
 #                # calculate PSNR 
-#                denoised_imgs = torch.clamp(noisy_imgs-preds, 0.0, 1.0)
-#                if noise_type == 'normal':
-#                    epoch_psnr_normal += psnr_of_batch(clean_imgs, denoised_imgs)
-#                    num_normal += 1
-#                elif noise_type == 'uniform':
-#                    epoch_psnr_uniform += psnr_of_batch(clean_imgs, denoised_imgs)
-#                    num_uniform += 1
-#                elif noise_type == 'pepper':
-#                    epoch_psnr_pepper += psnr_of_batch(clean_imgs, denoised_imgs)
-#                    num_pepper += 1
+#                epoch_psnr += psnr_of_batch(clean_spectra, preds)
 #
-#
-#                val_steps += 1
-#
-#        # epoch summary
-#        epoch_train_loss /= train_steps
-#        epoch_val_loss /= val_steps
-#        if num_normal > 0:
-#            epoch_psnr_normal /= num_normal 
-#        if num_uniform > 0:
-#            epoch_psnr_uniform /= num_uniform 
-#        if num_pepper > 0:
-#            epoch_psnr_pepper /= num_pepper 
-#
-#        # reduce learning rate if validation has leveled off
-#        #scheduler.step(epoch_val_loss)
+        # epoch summary
+        epoch_train_loss /= len(train_loader) 
+        epoch_val_loss /= len(val_loader) 
+        epoch_psnr /= len(val_loader)
+
+        # reduce learning rate if validation has leveled off
+        scheduler.step(epoch_val_loss)
 #
 #        # exponential decay of learning rate
 #        scheduler.step()
-#
-#        # save epoch stats
-#        history['train'].append(epoch_train_loss)
-#        history['val'].append(epoch_val_loss)
-#        history['psnr']['normal'].append(epoch_psnr_normal)
-#        history['psnr']['uniform'].append(epoch_psnr_uniform)
-#        history['psnr']['pepper'].append(epoch_psnr_pepper)
-#        print(f'Training loss: {epoch_train_loss}')
-#        print(f'Validation loss: {epoch_val_loss}')
-#        print(f'Validation PSNR-uniform: {epoch_psnr_uniform}')
-#        print(f'Validation PSNR-normal: {epoch_psnr_normal}')
-#        print(f'Validation PSNR-pepper: {epoch_psnr_pepper}')
+
+        # save epoch stats
+        history['train'].append(epoch_train_loss)
+        history['val'].append(epoch_val_loss)
+        history['psnr'].append(epoch_psnr)
+        print(f'Training loss: {epoch_train_loss}')
+        print(f'Validation loss: {epoch_val_loss}')
+        print(f'Validation PSNR: {epoch_psnr}')
+
 #        writer.add_scalar('loss', epoch_train_loss, epoch)
 #        writer.add_scalar('val', epoch_val_loss, epoch)
 #        writer.add_scalar('PSNR-normal', epoch_psnr_normal, epoch)
 #        writer.add_scalar('PSNR-uniform', epoch_psnr_uniform, epoch)
 #        writer.add_scalar('PSNR-pepper', epoch_psnr_pepper, epoch)
 #
-#        # save if best model
-#        if epoch_val_loss < best_val_loss:
-#            print('Saving best model')
-#            best_val_loss = epoch_val_loss
-#            torch.save(model, os.path.join(args.log_dir, 'best_model.pt'))
-#            pickle.dump(history, open(os.path.join(args.log_dir, 'best_model.npy'), 'wb'))
+        # save if best model
+        if epoch_val_loss < best_val_loss:
+            print('Saving best model')
+            best_val_loss = epoch_val_loss
+            torch.save(model, os.path.join(args.log_dir, 'best_model.pt'))
+            pickle.dump(history, open(os.path.join(args.log_dir, 'best_model.npy'), 'wb'))
 #
 #        # test model and save results 
 #        if epoch % 5 == 0:
@@ -266,10 +232,10 @@ def main():
 #                    denoised_imgs = make_grid(denoised_imgs.data, nrow=8, normalize=True, scale_each=True)
 #                    writer.add_image(f'{noise_type} denoised images', denoised_imgs, epoch)
 #
-#    # saving final model
-#    print('Saving final model')
-#    torch.save(model, os.path.join(args.log_dir, 'final_model.pt'))
-#    pickle.dump(history, open(os.path.join(args.log_dir, 'final_model.npy'), 'wb'))
+    # saving final model
+    print('Saving final model')
+    torch.save(model, os.path.join(args.log_dir, 'final_model.pt'))
+    pickle.dump(history, open(os.path.join(args.log_dir, 'final_model.npy'), 'wb'))
 
     print(f'Script completed in {time.time()-start:.2f} secs')
     return 0
