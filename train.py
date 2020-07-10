@@ -134,7 +134,7 @@ def main():
 #    writer = SummaryWriter(args.log_dir)
 
 #    # schedulers
-    scheduler = ReduceLROnPlateau(optimizer, 'min', verbose=True, patience=args.patience//2)
+    scheduler = ReduceLROnPlateau(optimizer, 'max', verbose=True, patience=args.patience//2)
 #    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.lr_decay)
 
 
@@ -197,7 +197,8 @@ def main():
         epoch_psnr /= len(val_loader)
 
         # reduce learning rate if validation has leveled off
-        scheduler.step(epoch_val_loss)
+        #scheduler.step(epoch_val_loss)
+        scheduler.step(epoch_psnr)
 
         # exponential decay of learning rate
 #        scheduler.step()
@@ -217,9 +218,11 @@ def main():
 #        writer.add_scalar('PSNR-pepper', epoch_psnr_pepper, epoch)
 #
         # save if best model
-        if epoch_val_loss < best_val_loss:
+        #if epoch_val_loss < best_val_loss:
+        if epoch_psnr > best_psnr:
             print('Saving best model')
-            best_val_loss = epoch_val_loss
+            #best_val_loss = epoch_val_loss
+            best_psnr = epoch_psnr
             epochs_since_improvement = 0
             torch.save(model.state_dict(), os.path.join(args.model_dir, 'best_model.pt'))
             pickle.dump(history, open(os.path.join(args.model_dir, 'best_model.npy'), 'wb'))
