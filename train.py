@@ -58,7 +58,7 @@ def main():
 
     # make sure data files exist
     assert os.path.exists(args.train_set), f'Cannot find training vectors file {args.train_set}'
-#    assert os.path.exists(args.val_set), f'Cannot find validation vectors file {args.train_set}'
+#    assert os.path.exists(args.val_set), f'Cannot find validation vectors file {args.val_set}'
 
     # make sure output dirs exists
     os.makedirs(args.log_dir, exist_ok=True)
@@ -84,7 +84,6 @@ def main():
 
     # split data into train and validation sets
     x_train, x_val, y_train, y_val = train_test_split(noisy_spectra, clean_spectra, test_size = 0.1, random_state=args.seed)
-
 
     # get standardization parameters from training set
     train_mean = np.mean(x_train)
@@ -112,6 +111,8 @@ def main():
     # create model
     model = DnCNN(num_channels=num_channels, num_layers=args.num_layers, \
                   kernel_size=args.filter_size, stride=args.stride, num_filters=args.num_filters) 
+    #model = DnCNN_Res(num_channels=num_channels, num_layers=args.num_layers, \
+    #              kernel_size=args.filter_size, stride=args.stride, num_filters=args.num_filters) 
 
     # move model to available gpus
     model = torch.nn.DataParallel(model, device_ids=device_ids).cuda()
@@ -213,9 +214,7 @@ def main():
 
 #        writer.add_scalar('loss', epoch_train_loss, epoch)
 #        writer.add_scalar('val', epoch_val_loss, epoch)
-#        writer.add_scalar('PSNR-normal', epoch_psnr_normal, epoch)
-#        writer.add_scalar('PSNR-uniform', epoch_psnr_uniform, epoch)
-#        writer.add_scalar('PSNR-pepper', epoch_psnr_pepper, epoch)
+#        writer.add_scalar('PSNR', epoch_psnr, epoch)
 #
         # save if best model
         #if epoch_val_loss < best_val_loss:
@@ -241,7 +240,8 @@ def main():
 #                for noise_type in noise_types:
 #                    denoised_imgs = make_grid(denoised_imgs.data, nrow=8, normalize=True, scale_each=True)
 #                    writer.add_image(f'{noise_type} denoised images', denoised_imgs, epoch)
-#
+
+    print(f'Best PSNR: {best_psnr}')
     # saving final model
     print('Saving final model')
     torch.save(model.state_dict(), os.path.join(args.model_dir, 'final_model.pt'))

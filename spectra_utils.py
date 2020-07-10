@@ -69,6 +69,30 @@ def compare_spectra(keV, spectrum, noisy_spectrum, rn, outdir, show_plot=False):
 
     plt.close()
 
+def compare_results(keV, spectrum, noisy_spectrum, denoised_spectrum, outdir, fname, show_plot=False):
+
+    plt.figure(figsize=(20,10))
+    plt.plot(keV, spectrum, label="Target Spectrum", color='blue')
+    plt.plot(keV, noisy_spectrum, alpha=0.5, label="Noisy Spectrum", color='green')
+    plt.plot(keV, denoised_spectrum, alpha=0.5, label="Denoised Spectrum", color='red')
+    
+    ax = plt.gca()
+    ax.set_xlabel('Energy (keV)', fontsize=18, fontweight='bold', fontname='cmtt10')
+    ax.set_ylabel('Intensity', fontsize=18, fontweight='bold', fontname='cmtt10')
+    ax.set_xticks(np.arange(keV[0], keV[-1], 50))
+    ax.set_xticks(np.arange(keV[0], keV[-1], 10), minor=True)
+    ax.grid(axis='x', which='major', alpha=0.5)
+    ax.grid(axis='x', which='minor', alpha=0.2)
+
+    plt.legend(fancybox=True, shadow=True, fontsize=11)
+    plt.tight_layout()
+    plt.savefig(os.path.join(outdir, fname) + '-results.png', format='png')
+
+    if show_plot:
+        plt.show()
+
+    plt.close()
+
 def load_radionuclide_nndc(root, rn):
 
     rn_num, rn_name = split_radionuclide_name(rn)
