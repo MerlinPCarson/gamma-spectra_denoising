@@ -173,15 +173,17 @@ def apply_efficiency_curve(keV, intensity, eff_vals):
 
     assert len(keV) == len(intensity), "Mismatch in number of energy and intensity values!"
 
+    eff_intensity = np.zeros_like(intensity)
+
     for n, (k, i) in enumerate(zip(keV, intensity)):
         if 0 <= k < eff_vals['LOW']['MAX_KEV']:
-            intensity[n] = apply_efficiency(k, i, eff_vals['LOW'])
+            eff_intensity[n] = apply_efficiency(k, i, eff_vals['LOW'])
         elif eff_vals['LOW']['MAX_KEV'] <= k < eff_vals['HIGH']['MAX_KEV']:
-            intensity[n] = apply_efficiency(k, i, eff_vals['HIGH'])
+            eff_intensity[n] = apply_efficiency(k, i, eff_vals['HIGH'])
         else:
-            intensity[n] = 0
+            eff_intensity[n] = 0
 
-    return np.clip(intensity, a_min=0, a_max=None)
+    return np.clip(eff_intensity, a_min=0, a_max=None)
 
 
 def apply_efficiency(keV, intensity, eff_vals):
