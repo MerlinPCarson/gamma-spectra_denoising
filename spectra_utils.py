@@ -72,9 +72,9 @@ def compare_spectra(keV, spectrum, noisy_spectrum, rn, outdir, show_plot=False):
 def compare_results(keV, spectrum, noisy_spectrum, denoised_spectrum, outdir, fname, show_plot=False):
 
     plt.figure(figsize=(20,10))
+    plt.plot(keV, noisy_spectrum, label="Noisy Spectrum", color='green', linestyle='-.')
     plt.plot(keV, spectrum, label="Target Spectrum", color='blue')
-    plt.plot(keV, noisy_spectrum, alpha=0.5, label="Noisy Spectrum", color='green')
-    plt.plot(keV, denoised_spectrum, alpha=0.5, label="Denoised Spectrum", color='red')
+    plt.plot(keV, denoised_spectrum, alpha=0.8, label="Denoised Spectrum", color='red', linestyle='--')
     
     ax = plt.gca()
     ax.set_xlabel('Energy (keV)', fontsize=18, fontweight='bold', fontname='cmtt10')

@@ -49,8 +49,6 @@ def save_dataset(dettype, dataset, outfile):
             except:
                 del h5f[dettype][k]
                 h5f[dettype].create_dataset(k, data=v)
-                #data = h5f[dettype][k] 
-                #data[...]= v 
 
 
 def main():
