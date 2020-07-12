@@ -1,7 +1,7 @@
 
 
 # gamma-spectra_denoising
-Algorithms for removing background and noise from gamma-ray spectra.
+Algorithms for removing background, Compton scatter and detector noise from gamma-ray spectra.
 
 # Scripts
 - gen_templates.py 
