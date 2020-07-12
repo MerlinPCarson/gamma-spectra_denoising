@@ -28,6 +28,10 @@ Algorithms for removing background, Compton scatter and detector noise from gamm
  
   Loads and views a training HD5F file created by build_dataset.
   
+- model.py
+
+  Contains Convolutional model classes. DnCNN (denoising CNN) and DnCNN-Res (denoising CNN with residual blocks).
+  
 - train.py
 
   Trains a model Convolutional model for denoising gamma-spectra using training set created by build_dataset.
