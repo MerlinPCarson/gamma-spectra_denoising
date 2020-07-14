@@ -49,16 +49,23 @@ def main():
     parser.add_argument('--batch_size', type=int, default=64, help='batch size for validation')
     parser.add_argument('--seed', type=int, default=42, help='random seed')
     parser.add_argument('--model', type=str, default='models/best_model.pt', help='location of model to use')
-    parser.add_argument('--outdir', type=str, default='tmp', help='location to save output plots')
+    parser.add_argument('--res', default=False, help='use model with residual blocks', action='store_true')
+    parser.add_argument('--outdir', type=str, help='location to save output plots')
     parser.add_argument('--savefigs', help='saves plots of results', default=False, action='store_true')
     args = parser.parse_args()
 
+    # if output directory is not provided, save plots to model directory
+    if not args.outdir:
+        args.outdir = os.path.dirname(args.model)
+    else:
+        # make sure output dirs exists
+        os.makedirs(args.outdir, exist_ok=True)
+        
+    print(f'args output {args.outdir}')
 
     # make sure data files exist
     assert os.path.exists(args.test_set), f'Cannot find testset vectors file {args.test_set}'
 
-    # make sure output dirs exists
-    os.makedirs(args.outdir, exist_ok=True)
 
     # detect gpus and setup environment variables
     device_ids = setup_gpus()
@@ -98,9 +105,17 @@ def main():
 
     # create and load model
     print(f'Loading model {args.model}')
-    model = DnCNN(num_channels=params['num_channels'], num_layers=params['num_layers'], \
-                  kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']) 
+    if not args.res:
+        model = DnCNN(num_channels=params['num_channels'], num_layers=params['num_layers'], \
+                      kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']) 
+    else:
+        model = DnCNN_Res(num_channels=params['num_channels'], num_layers=params['num_layers'], \
+                      kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']) 
+
+    # prepare model for data parallelism (use multiple GPUs)
     model = torch.nn.DataParallel(model, device_ids=device_ids).cuda()
+
+    # loaded saved model
     model.load_state_dict(torch.load(args.model))
 
     # Main training loop

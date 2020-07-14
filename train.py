@@ -41,7 +41,7 @@ def main():
     parser.add_argument('--det_type', type=str, default='HPGe', help='detector type to train {HPGe, NaI, CZT}')
     parser.add_argument('--train_set', type=str, default='data/training.h5', help='h5 file with training vectors')
 #    parser.add_argument('--val_set', type=str, default='val.h5', help='h5 file with validation vectors')
-    parser.add_argument('--batch_size', type=int, default=16, help='batch size for training')
+    parser.add_argument('--batch_size', type=int, default=64, help='batch size for training')
     parser.add_argument('--epochs', type=int, default=1000, help='number of epochs')
     parser.add_argument('--patience', type=int, default=20, help='number of epochs of no improvment before early stopping')
     parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
@@ -50,6 +50,7 @@ def main():
     parser.add_argument('--num_filters', type=int, default=64, help='number of filters per CNN layer')
     parser.add_argument('--filter_size', type=int, default=3, help='size of filter for CNN layers')
     parser.add_argument('--stride', type=int, default=1, help='filter stride for CNN layers')
+    parser.add_argument('--res', default=False, help='use model with residual blocks', action='store_true')
     parser.add_argument('--seed', type=int, default=42, help='random seed')
     parser.add_argument('--log_dir', type=str, default='logs', help='location of log files')
     parser.add_argument('--model_dir', type=str, default='models', help='location of model files')
@@ -105,16 +106,18 @@ def main():
     print(f'Number of validation examples: {len(x_val)}')
 
     # create batched data loaders for model
-    train_loader = DataLoader(dataset=train_dataset, num_workers=os.cpu_count(), batch_size=args.batch_size*len(device_ids), shuffle=True)
+    train_loader = DataLoader(dataset=train_dataset, num_workers=os.cpu_count(), batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(dataset=val_dataset, num_workers=os.cpu_count(), batch_size=args.batch_size, shuffle=False)
 
     # create model
-    model = DnCNN(num_channels=num_channels, num_layers=args.num_layers, \
-                  kernel_size=args.filter_size, stride=args.stride, num_filters=args.num_filters) 
-    #model = DnCNN_Res(num_channels=num_channels, num_layers=args.num_layers, \
-    #              kernel_size=args.filter_size, stride=args.stride, num_filters=args.num_filters) 
+    if not args.res:
+        model = DnCNN(num_channels=num_channels, num_layers=args.num_layers, \
+                      kernel_size=args.filter_size, stride=args.stride, num_filters=args.num_filters) 
+    else:
+        model = DnCNN_Res(num_channels=num_channels, num_layers=args.num_layers, \
+                      kernel_size=args.filter_size, stride=args.stride, num_filters=args.num_filters) 
 
-    # move model to available gpus
+    # prepare model for data parallelism (use multiple GPUs)
     model = torch.nn.DataParallel(model, device_ids=device_ids).cuda()
     print(model)
 
