@@ -3,6 +3,11 @@
 # gamma-spectra_denoising
 Algorithms for removing background, Compton scatter and detector noise from gamma-ray spectra.
 
+# Requirements
+* Pytorch
+* Sklearn
+* Scikit-Image
+
 # Scripts
 - gen_templates.py 
 
