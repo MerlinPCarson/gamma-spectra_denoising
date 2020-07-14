@@ -1,6 +1,6 @@
 
 
-# gamma-spectra_denoising
+# Gamma-Spectra denoising
 Algorithms for removing background, Compton scatter and detector noise from gamma-ray spectra.
 
 # Requirements
