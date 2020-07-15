@@ -165,8 +165,12 @@ def generate_spectrum(rn_table, config, compton_scale=0.0, min_efficiency=50, al
 
     # smooth spectrum with compton and noise
     noisy_spectrum = data_smooth(spectrum_keV, spectrum+compton+noise, **config['SMOOTH_PARAMS'])
+    
+    # noise only
+    noise = data_smooth(spectrum_keV, compton+noise, **config['SMOOTH_PARAMS'])
 
-    return spectrum_keV, smooth_spectrum, noisy_spectrum 
+    #compare_results(spectrum_keV, smooth_spectrum, noisy_spectrum, noise, 'tmp', 'test.png', show_plot=True)
+    return spectrum_keV, smooth_spectrum, noisy_spectrum, noise
 
 
 def apply_efficiency_curve(keV, intensity, eff_vals):

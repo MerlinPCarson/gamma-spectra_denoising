@@ -23,15 +23,18 @@ def load_nndc_tables(nndc_dir, radionuclides):
 
 def generate_spectra(config, nndc_tables, outdir, savefigs, params):
 
-    spectra = {"spectrum": [], "noisy_spectrum": []} 
+    spectra = {"name": [], "spectrum": [], "noisy_spectrum": [], "noise": [], "compton_scale": [], "noise_scale": []} 
     for rn_name, rn_values in tqdm(nndc_tables.items()):
-        #print(f"building spectra for {rn_name}")
         for compton_scale, noise_scale in params:
-            spectrum_keV, spectrum, noisy_spectrum = generate_spectrum(rn_values, config, compton_scale=compton_scale, noise_scale=noise_scale)
+            spectrum_keV, spectrum, noisy_spectrum, noise = generate_spectrum(rn_values, config, compton_scale=compton_scale, noise_scale=noise_scale)
+            spectra["name"].append(rn_name.encode('utf-8'))
             spectra["spectrum"].append(spectrum)
             spectra["noisy_spectrum"].append(noisy_spectrum)
+            spectra["noise"].append(noise)
+            spectra["compton_scale"].append(compton_scale)
+            spectra["noise_scale"].append(noise_scale)
             if savefigs:
-                compare_spectra(spectrum_keV, spectrum, noisy_spectrum, rn_name, outdir, show_plot=False)
+                compare_spectra(spectrum_keV, spectrum, noise, rn_name, outdir, show_plot=False)
 
     spectra["keV"] = spectrum_keV
 
@@ -63,10 +66,10 @@ def main():
     parser.add_argument("-sf", "--savefigs", help="saves plots of templates", action="store_true")
     parser.add_argument("-maxn", "--maxnoise", help="maximum noise scale", default=1.0, type=float)
     parser.add_argument("-minn", "--minnoise", help="minimum noise scale", default=0.1, type=float)
-    parser.add_argument("-nn", "--numnoise", help="number of noise scales between 0.0 and max noise scale", default=10, type=int)
+    parser.add_argument("-nn", "--numnoise", help="number of noise scales between 0.0 and max noise scale", default=2, type=int)
     parser.add_argument("-maxc", "--maxcompton", help="maximum compton sacle", default=0.5, type=float)
     parser.add_argument("-minc", "--mincompton", help="minimum compton sacle", default=0.1, type=float)
-    parser.add_argument("-nc", "--numcompton", help="number of compton scales between 0.0 and max compton scale", default=10, type=int)
+    parser.add_argument("-nc", "--numcompton", help="number of compton scales between 0.0 and max compton scale", default=2, type=int)
     arg = parser.parse_args()
 
     outdir = os.path.dirname(arg.outfile)
