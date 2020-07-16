@@ -20,6 +20,17 @@ def split_radionuclide_name(rn_name):
     num_letter = re.compile("([0-9]+)([a-zA-Z]+)") 
     return num_letter.match(rn_name).groups() 
 
+def plot_data(dataset):
+    for i in range(len(dataset["name"])):
+        plt.plot(dataset["keV"], dataset["clean"][i], label='clean spectrum') 
+        plt.plot(dataset["keV"], dataset["noisy"][i], label='noisy spectrum') 
+        plt.plot(dataset["keV"], dataset["noise"][i], label='noise') 
+        rn_num, rn_name = split_radionuclide_name(dataset["name"][i].decode('utf-8'))
+        rn = "${}^{"+rn_num+"}{"+rn_name+"}$"
+        plt.title(f'{rn} with Compton scale: {dataset["compton_scale"][i]}, noise scale {dataset["noise_scale"][i]}')
+        plt.legend()
+        plt.show()
+
 def plot_spectrum(keV, intensity, rn, outdir, show_plot=False):
 
     rn_num, rn_name = split_radionuclide_name(rn)

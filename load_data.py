@@ -4,9 +4,7 @@ import h5py
 import argparse
 import numpy as np
 
-import matplotlib.pyplot as plt
-
-from spectra_utils import split_radionuclide_name
+from spectra_utils import split_radionuclide_name, plot_data
 
 
 def load_data(datafile, det, show_data=False):
@@ -19,17 +17,6 @@ def load_data(datafile, det, show_data=False):
         plot_data(dataset)
 
     return dataset
-
-def plot_data(dataset):
-    for i in range(len(dataset["name"])):
-        plt.plot(dataset["keV"], dataset["clean"][i], label='clean spectrum') 
-        plt.plot(dataset["keV"], dataset["noisy"][i], label='noisy spectrum') 
-        plt.plot(dataset["keV"], dataset["noise"][i], label='noise') 
-        rn_num, rn_name = split_radionuclide_name(dataset["name"][i].decode('utf-8'))
-        rn = "${}^{"+rn_num+"}{"+rn_name+"}$"
-        plt.title(f'{rn} with Compton scale: {dataset["compton_scale"][i]}, noise scale {dataset["noise_scale"][i]}')
-        plt.legend()
-        plt.show()
 
 def dataset_stats(dataset, det):
     print(f'Dataset {det}')

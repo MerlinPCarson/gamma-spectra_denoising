@@ -69,10 +69,11 @@ def main():
     device_ids = setup_gpus()
     print(f'Cuda devices found: {[torch.cuda.get_device_name(i) for i in device_ids]}')
 
-    print('Loading datasets')
-    training_data = load_data(args.train_set)
-    noisy_spectra = training_data[args.det_type.upper()]['noisy']
-    clean_spectra = training_data[args.det_type.upper()]['clean']
+    print(f'Loading dataset {args.det_type}')
+    training_data = load_data(args.train_set, args.det_type.upper())
+    noisy_spectra = training_data['noisy']
+    clean_spectra = training_data['clean']
+    noise = training_data['noise']
 
     noisy_spectra = np.expand_dims(noisy_spectra, axis=1)
     clean_spectra = np.expand_dims(clean_spectra, axis=1)
