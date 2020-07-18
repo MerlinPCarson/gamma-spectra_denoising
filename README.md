@@ -59,5 +59,5 @@ Algorithms for removing background, Compton scatter and detector noise from gamm
 - [ ] Compare results of both approaches
 
 ## License
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/mpc6/AudioRNN/blob/master/LICENSE.txt)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/mpc6/gamma-spectra_denoising/blob/master/LICENSE.txt)
 This work is released under MIT license.
