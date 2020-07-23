@@ -36,6 +36,7 @@ Algorithms for removing background, Compton scatter and detector noise from gamm
 - model.py
 
   Contains Convolutional model classes. DnCNN (denoising CNN) and DnCNN-Res (denoising CNN with residual blocks).
+  * DnCNN is an image denoising CNN developed by Zhang el al. ([Beyond a Gaussian Denoiser: Residual Learning of Deep CNN for Image Denoising](https://arxiv.org/pdf/1608.03981.pdf)) which I've implemented using Pytorch and converted the 2D-Convolutional layers to 1D. The DnCNN-Res is an amalgamation of the DnCNN model and the Res-Net model ([Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)) by adding skip connections between every other Convolutional layer, which allows for the training of ultra-deep models without encountering the problem of vanishing gradients.
   
 - train.py
 
