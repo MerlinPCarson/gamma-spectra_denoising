@@ -45,6 +45,7 @@ def main():
 
     parser = argparse. ArgumentParser(description='Gamma-Spectra Denoising Trainer')
     parser.add_argument('--det_type', type=str, default='HPGe', help='detector type to train {HPGe, NaI, CZT}')
+    parser.add_argument('--gennoise', help='model predicts noise', default=False, action="store_true")
     parser.add_argument('--test_set', type=str, default='data/training.h5', help='h5 file with training vectors')
     parser.add_argument('--batch_size', type=int, default=64, help='batch size for validation')
     parser.add_argument('--seed', type=int, default=42, help='random seed')
@@ -72,10 +73,10 @@ def main():
     print(f'Cuda devices found: {[torch.cuda.get_device_name(i) for i in device_ids]}')
 
     print('Loading datasets')
-    test_data = load_data(args.test_set)
-    noisy_spectra = test_data[args.det_type.upper()]['noisy']
-    clean_spectra = test_data[args.det_type.upper()]['clean']
-    spectra_keV = test_data[args.det_type.upper()]['keV']
+    test_data = load_data(args.test_set, args.det_type.upper())
+    noisy_spectra = test_data['noisy']
+    clean_spectra = test_data['clean']
+    spectra_keV = test_data['keV']
 
     noisy_spectra = np.expand_dims(noisy_spectra, axis=1)
     clean_spectra = np.expand_dims(clean_spectra, axis=1)
@@ -139,7 +140,10 @@ def main():
             noisy_spectra = noisy_spectra.cpu().numpy().astype(np.float32)
             preds = preds.cpu().numpy().astype(np.float32)
             psnr_noisy = psnr_of_batch(clean_spectra, noisy_spectra)
-            psnr_denoised = psnr_of_batch(clean_spectra, preds)
+            if not args.gennoise:
+                psnr_denoised = psnr_of_batch(clean_spectra, preds)
+            else:
+                psnr_denoised = psnr_of_batch(clean_spectra, noisy_spectra-preds)
             total_psnr_noisy += psnr_noisy
             total_psnr_denoised += psnr_denoised
             print(f'[{num}/{len(val_loader)}] PSNR {psnr_noisy} --> {psnr_denoised}, increase of {psnr_denoised-psnr_noisy}')

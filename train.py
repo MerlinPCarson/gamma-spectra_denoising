@@ -38,6 +38,7 @@ def main():
     start = time.time()
 
     parser = argparse. ArgumentParser(description='Gamma-Spectra Denoising Trainer')
+    parser.add_argument("-gn", "--gennoise", help="use noise as target", default=False, action="store_true")
     parser.add_argument('--det_type', type=str, default='HPGe', help='detector type to train {HPGe, NaI, CZT}')
     parser.add_argument('--train_set', type=str, default='data/training.h5', help='h5 file with training vectors')
 #    parser.add_argument('--val_set', type=str, default='val.h5', help='h5 file with validation vectors')
@@ -72,20 +73,30 @@ def main():
     print(f'Loading dataset {args.det_type}')
     training_data = load_data(args.train_set, args.det_type.upper())
     noisy_spectra = training_data['noisy']
-    clean_spectra = training_data['clean']
-    noise = training_data['noise']
+    target_spectra = training_data['clean']
 
+    assert noisy_spectra.shape == target_spectra.shape, 'Mismatch between shapes of training and target data'
     noisy_spectra = np.expand_dims(noisy_spectra, axis=1)
-    clean_spectra = np.expand_dims(clean_spectra, axis=1)
 
-    assert noisy_spectra.shape == clean_spectra.shape, 'Mismatch between shapes of training and target data'
+    # if target is noise
+    if args.gennoise:
+        noise = training_data['noise']
+        #assert noisy_spectra.shape == noise.shape, 'Mismatch between shapes of training and target data'
+        # add noise to target data since noise will be the target not the clean spectra, still need clean data for PSNR
+        target_spectra = np.stack((target_spectra,noise), axis=1)
+    else:
+        target_spectra = np.expand_dims(target_spectra, axis=1)
+
 
     # applying random seed for reproducability
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
     # split data into train and validation sets
-    x_train, x_val, y_train, y_val = train_test_split(noisy_spectra, clean_spectra, test_size = 0.1, random_state=args.seed)
+    x_train, x_val, y_train, y_val = train_test_split(noisy_spectra, target_spectra, test_size = 0.1, random_state=args.seed)
+
+    print(f'Training data: {x_train.shape}, validation data: {x_val.shape}')
+    print(f'Training target: {y_train.shape}, validation target: {y_val.shape}')
 
     # get standardization parameters from training set
     train_mean = np.mean(x_train)
@@ -93,7 +104,7 @@ def main():
 
     # apply standardization parameters to training and validation sets
     x_train = (x_train-train_mean)/train_std
-    x_val = (x_val-train_mean)/train_std
+    #x_val = (x_val-train_mean)/train_std
 
     # input shape for each example to network, NOTE: channels first
     num_channels, num_features = 1, x_train.shape[2]
@@ -156,18 +167,21 @@ def main():
         epoch_train_loss = 0
 
         # iterate through batches of training examples
-        for noisy_spectra, clean_spectra in tqdm(train_loader):
+        for noisy_spectra, target_data in tqdm(train_loader):
             model.zero_grad()
 
             # move batch to GPU
             noisy_spectra = Variable(noisy_spectra.cuda())
-            clean_spectra = Variable(clean_spectra.cuda())
+            if not args.gennoise:
+                target = Variable(target_data[:,0:1,:].cuda())
+            else:
+                target = Variable(target_data[:,1:,:].cuda())
 
             # make predictions
             preds = model(noisy_spectra)
 
             # calculate loss
-            loss = criterion(preds, clean_spectra)/(2*len(noisy_spectra))
+            loss = criterion(preds, target)/(2*len(noisy_spectra))
             epoch_train_loss += loss.item()
 
             # backprop
@@ -180,21 +194,34 @@ def main():
         epoch_val_loss = 0
         epoch_psnr = 0
         with torch.no_grad():
-            for noisy_spectra, clean_spectra in tqdm(val_loader):
+            for noisy_spectra, target_data in tqdm(val_loader):
 
+                # standardize during training so we can original data for PSNR
+                x_val = (noisy_spectra-train_mean)/train_std
+                
                 # move batch to GPU
-                noisy_spectra = Variable(noisy_spectra.cuda())
-                clean_spectra = Variable(clean_spectra.cuda())
+                x_val = Variable(x_val.cuda())
+
+                if not args.gennoise:
+                    target = Variable(target_data[:,0:1,:].cuda())
+                else:
+                    target = Variable(target_data[:,1:,:].cuda())
 
                 # make predictions
-                preds = model(noisy_spectra)
+                preds = model(x_val)
 
                 # calculate loss
-                val_loss = criterion(preds, clean_spectra)/(2*len(noisy_spectra))
+                val_loss = criterion(preds, target)/(2*len(noisy_spectra))
                 epoch_val_loss += val_loss.item()
 
                 # calculate PSNR 
-                epoch_psnr += psnr_of_batch(clean_spectra.cpu().numpy().astype(np.float32), preds.cpu().numpy().astype(np.float32))
+                if not args.gennoise:
+                    epoch_psnr += psnr_of_batch(target.cpu().numpy().astype(np.float32), \
+                                                preds.cpu().numpy().astype(np.float32))
+                else:
+                    denoised = noisy_spectra - preds.cpu()    # subtract predicted noise from noisy spectra
+                    epoch_psnr += psnr_of_batch(target_data[:,0:1,:].numpy().astype(np.float32), \
+                                                denoised.numpy().astype(np.float32))
 
         # epoch summary
         epoch_train_loss /= len(train_loader) 
