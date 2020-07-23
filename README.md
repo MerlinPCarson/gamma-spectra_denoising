@@ -48,9 +48,9 @@ Algorithms for removing background, Compton scatter and detector noise from gamm
 # Roadmap
 
 - [x] Build simulated datasets based on real detector properties
-- [ ] Train Deep Learning models
+- [x] Train Deep Learning models
   - [x] Generative convolutional model for clean gamma-spectra
-  - [ ] Generative convolutional model for noise mask
+  - [x] Generative convolutional model for noise mask
 - [ ] Experiment with Convex Optimization 
 - [ ] Optimize algorithm parameters
   - [ ] Clean geneartive convolutional model
