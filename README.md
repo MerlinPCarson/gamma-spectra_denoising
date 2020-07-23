@@ -39,11 +39,11 @@ Algorithms for removing background, Compton scatter and detector noise from gamm
   
 - train.py
 
-  Trains a model Convolutional model for denoising gamma-spectra using training set created by build_dataset.
+  Trains a Convolutional model for denoising gamma-spectra using training set created by build_dataset (default model predicts clean spectra, "--gennoise" flag trains model that predicts noise mask).
   
 - denoise.py
 
-  Tests trained model on validation data, generates plots to view the results.  
+  Tests trained model on validation data, generates plots to view the results (default is clean generative model, "--gennoise" flag tests noise mask model).  
   
 # Roadmap
 
@@ -56,7 +56,7 @@ Algorithms for removing background, Compton scatter and detector noise from gamm
   - [ ] Clean geneartive convolutional model
   - [ ] Noise mask generative convolutional model
   - [ ] Convex Optimization
-- [ ] Compare results of both approaches
+- [ ] Compare results of approaches
 
 ## License
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/mpc6/gamma-spectra_denoising/blob/master/LICENSE.txt)
