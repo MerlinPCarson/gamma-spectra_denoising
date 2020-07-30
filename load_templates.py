@@ -4,6 +4,17 @@ import h5py
 import argparse
 
 
+def load_templates(datafile, dettype):
+
+    templates = {'name': [], 'intensity': [], 'keV': []}
+    with h5py.File(datafile, 'r') as h5f:
+        for item in h5f[dettype]:
+            templates['name'].append(item)
+            templates['intensity'].append(h5f[dettype][item]['intensity'][()])
+            templates['keV'].append(h5f[dettype][item]['keV'][()])
+
+    return templates
+
 def show_hierarchy(datafile):
     with h5py.File(datafile, 'r') as h5f:
         for k in h5f.keys():
