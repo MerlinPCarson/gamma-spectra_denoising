@@ -47,6 +47,7 @@ def main():
     parser.add_argument('--det_type', type=str, default='HPGe', help='detector type to train {HPGe, NaI, CZT}')
     parser.add_argument('--gennoise', help='model predicts noise', default=False, action="store_true")
     parser.add_argument('--test_set', type=str, default='data/training.h5', help='h5 file with training vectors')
+    parser.add_argument('--all', default=False, help='denoise all examples in test_set file', action='store_true')
     parser.add_argument('--batch_size', type=int, default=64, help='batch size for validation')
     parser.add_argument('--seed', type=int, default=42, help='random seed')
     parser.add_argument('--model', type=str, default='models/best_model.pt', help='location of model to use')
@@ -88,17 +89,19 @@ def main():
     torch.manual_seed(args.seed)
 
     # split data into train and validation sets
-    _, x_val, _, y_val = train_test_split(noisy_spectra, clean_spectra, test_size = 0.1, random_state=args.seed)
+    if not args.all:
+        _, x_val, _, y_val = train_test_split(noisy_spectra, clean_spectra, test_size = 0.1, random_state=args.seed)
+        val_dataset = TensorDataset(torch.Tensor(x_val), torch.Tensor(y_val))
+    else:
+        val_dataset = TensorDataset(torch.Tensor(noisy_spectra), torch.Tensor(clean_spectra))
+
+    print(f'Number of validation examples: {len(val_dataset)}')
 
     # get standardization parameters for model
     params = pickle.load(open(args.model.replace('.pt','.npy'),'rb'))['model']
     train_mean = params['train_mean'] 
     train_std = params['train_std'] 
 
-    # load data for training
-    val_dataset = TensorDataset(torch.Tensor(x_val), torch.Tensor(y_val))
-
-    print(f'Number of validation examples: {len(x_val)}')
 
     # create batched data loaders for model
     val_loader = DataLoader(dataset=val_dataset, num_workers=os.cpu_count(), batch_size=args.batch_size, shuffle=False)
