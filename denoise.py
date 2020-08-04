@@ -17,6 +17,7 @@ from torch.autograd import Variable
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from load_data import load_data
+from build_dataset import save_dataset
 from spectra_utils import compare_results
 from model import DnCNN, DnCNN_Res
 #from utils import weights_init_kaiming
@@ -44,15 +45,16 @@ def main():
     start = time.time()
 
     parser = argparse. ArgumentParser(description='Gamma-Spectra Denoising Trainer')
-    parser.add_argument('--det_type', type=str, default='HPGe', help='detector type to train {HPGe, NaI, CZT}')
+    parser.add_argument('--dettype', type=str, default='HPGe', help='detector type to train {HPGe, NaI, CZT}')
     parser.add_argument('--gennoise', help='model predicts noise', default=False, action="store_true")
     parser.add_argument('--test_set', type=str, default='data/training.h5', help='h5 file with training vectors')
     parser.add_argument('--all', default=False, help='denoise all examples in test_set file', action='store_true')
-    parser.add_argument('--batch_size', type=int, default=64, help='batch size for validation')
+    parser.add_argument('--batch_size', type=int, default=64, help='batch size for denoising')
     parser.add_argument('--seed', type=int, default=42, help='random seed')
     parser.add_argument('--model', type=str, default='models/best_model.pt', help='location of model to use')
     parser.add_argument('--res', default=False, help='use model with residual blocks', action='store_true')
     parser.add_argument('--outdir', type=str, help='location to save output plots')
+    parser.add_argument('--outfile', type=str, help='location to save output data', default='denoised.h5')
     parser.add_argument('--savefigs', help='saves plots of results', default=False, action='store_true')
     args = parser.parse_args()
 
@@ -74,9 +76,9 @@ def main():
     print(f'Cuda devices found: {[torch.cuda.get_device_name(i) for i in device_ids]}')
 
     print('Loading datasets')
-    test_data = load_data(args.test_set, args.det_type.upper())
-    noisy_spectra = test_data['noisy']
-    clean_spectra = test_data['clean']
+    test_data = load_data(args.test_set, args.dettype.upper())
+    noisy_spectra = test_data['noisy_spectrum']
+    clean_spectra = test_data['spectrum']
     spectra_keV = test_data['keV']
 
     noisy_spectra = np.expand_dims(noisy_spectra, axis=1)
@@ -88,14 +90,14 @@ def main():
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
-    # split data into train and validation sets
+    # create dataset for denoising, if not 'all' use training seed to recreate validation set
     if not args.all:
         _, x_val, _, y_val = train_test_split(noisy_spectra, clean_spectra, test_size = 0.1, random_state=args.seed)
         val_dataset = TensorDataset(torch.Tensor(x_val), torch.Tensor(y_val))
     else:
         val_dataset = TensorDataset(torch.Tensor(noisy_spectra), torch.Tensor(clean_spectra))
 
-    print(f'Number of validation examples: {len(val_dataset)}')
+    print(f'Number of examples to denoise: {len(val_dataset)}')
 
     # get standardization parameters for model
     params = pickle.load(open(args.model.replace('.pt','.npy'),'rb'))['model']
@@ -128,6 +130,8 @@ def main():
     model.eval() 
     total_psnr_noisy = 0
     total_psnr_denoised = 0
+
+    denoised = []
     with torch.no_grad():
         for num, (noisy_spectra, clean_spectra) in enumerate(val_loader, start=1):
 
@@ -143,15 +147,28 @@ def main():
             noisy_spectra = noisy_spectra.cpu().numpy().astype(np.float32)
             preds = preds.cpu().numpy().astype(np.float32)
             psnr_noisy = psnr_of_batch(clean_spectra, noisy_spectra)
+
+            # save denoised spectrum
             if not args.gennoise:
-                psnr_denoised = psnr_of_batch(clean_spectra, preds)
+                denoised_spectrum = preds
             else:
-                psnr_denoised = psnr_of_batch(clean_spectra, noisy_spectra-preds)
+                denoised_spectrum = noisy_spectra-preds 
+            denoised.extend(denoised_spectrum.tolist()) 
+
+            psnr_denoised = psnr_of_batch(clean_spectra, denoised_spectrum)
             total_psnr_noisy += psnr_noisy
             total_psnr_denoised += psnr_denoised
             print(f'[{num}/{len(val_loader)}] PSNR {psnr_noisy} --> {psnr_denoised}, increase of {psnr_denoised-psnr_noisy}')
             if args.savefigs:
                 compare_results(spectra_keV, clean_spectra[0,0,:], noisy_spectra[0,0,:], preds[0,0,:], args.outdir, str(num))
+
+    # save denoised data to file, currently only supports entire dataset
+    if args.all:
+        assert len(test_data['noisy_spectrum']) == len(denoised), f'{len(test_data["noisy_spectrum"])} examples yet {len(denoised)} denoised' 
+        denoised = np.squeeze(np.array(denoised))
+        print(f'denoised shape {denoised.shape}')
+        test_data['noisy_spectrum'] = denoised 
+        save_dataset(args.dettype.upper(), test_data, os.path.join(args.outdir, args.outfile))
 
     avg_psnr_noisy = total_psnr_noisy/len(val_loader)
     avg_psnr_denoised = total_psnr_denoised/len(val_loader)

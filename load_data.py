@@ -9,9 +9,9 @@ from spectra_utils import split_radionuclide_name, plot_data
 
 def load_data(datafile, det, show_data=False):
     with h5py.File(datafile, 'r') as h5f:
-        assert h5f[det]["spectrum"].shape == h5f[det]["noisy_spectrum"].shape, 'Mismatch between training examples and target examples'
-        dataset = {"name": h5f[det]["name"][()], "keV": h5f[det]["keV"][()], "clean": h5f[det]["spectrum"][()], \
-                            "noisy": h5f[det]["noisy_spectrum"][()], "noise": h5f[det]["noise"][()], \
+        assert h5f[det]["spectrum"].shape == h5f[det]["noisy_spectrum"].shape, f'Mismatch between training examples and target examples'
+        dataset = {"name": h5f[det]["name"][()], "keV": h5f[det]["keV"][()], "spectrum": h5f[det]["spectrum"][()], \
+                            "noisy_spectrum": h5f[det]["noisy_spectrum"][()], "noise": h5f[det]["noise"][()], \
                             "compton_scale": h5f[det]["compton_scale"][()], "noise_scale": h5f[det]["noise_scale"][()]}
     if show_data:
         plot_data(dataset)
@@ -21,8 +21,8 @@ def load_data(datafile, det, show_data=False):
 def dataset_stats(dataset, det):
     print(f'Dataset {det}')
     print(f'\tfeatures: {dataset["keV"].shape}')
-    print(f'\tclean spectra: {dataset["clean"].shape}')
-    print(f'\tnoisy spectra: {dataset["noisy"].shape}')
+    print(f'\tclean spectra: {dataset["spectrum"].shape}')
+    print(f'\tnoisy spectra: {dataset["noisy_spectrum"].shape}')
     print(f'\tnoise: {dataset["noise"].shape}')
     print(f'\tmin Compton scale: {np.min(dataset["compton_scale"])}')
     print(f'\tmax Compton scale: {np.max(dataset["compton_scale"])}')

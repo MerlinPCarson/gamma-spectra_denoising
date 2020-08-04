@@ -42,11 +42,11 @@ def main():
     bases = np.array(templates['intensity'])
 
     preds = []
-    for i, (name, spectra) in enumerate(zip(dataset['name'], dataset['noisy']), start=1):
+    for i, (name, spectrum) in enumerate(zip(dataset['name'], dataset['noisy_spectrum']), start=1):
         # Decompose measured spectrum
-        (ampl0, q) = cvx.decompose(bases, spectra, arg.complete, norm)
+        (ampl0, q) = cvx.decompose(bases, spectrum, arg.complete, norm)
 
-        # determine which template matched the noisy spectra best
+        # determine which template matched the noisy spectrum best
         pred = np.argmax(ampl0)
 
         preds.append(pred)
