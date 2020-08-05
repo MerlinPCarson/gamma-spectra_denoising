@@ -46,13 +46,11 @@ def main():
 
     parser = argparse. ArgumentParser(description='Gamma-Spectra Denoising Trainer')
     parser.add_argument('--dettype', type=str, default='HPGe', help='detector type to train {HPGe, NaI, CZT}')
-    parser.add_argument('--gennoise', help='model predicts noise', default=False, action="store_true")
     parser.add_argument('--test_set', type=str, default='data/training.h5', help='h5 file with training vectors')
     parser.add_argument('--all', default=False, help='denoise all examples in test_set file', action='store_true')
     parser.add_argument('--batch_size', type=int, default=64, help='batch size for denoising')
-    parser.add_argument('--seed', type=int, default=42, help='random seed')
+    parser.add_argument('--seed', type=int, help='random seed')
     parser.add_argument('--model', type=str, default='models/best_model.pt', help='location of model to use')
-    parser.add_argument('--res', default=False, help='use model with residual blocks', action='store_true')
     parser.add_argument('--outdir', type=str, help='location to save output plots')
     parser.add_argument('--outfile', type=str, help='location to save output data', default='denoised.h5')
     parser.add_argument('--savefigs', help='saves plots of results', default=False, action='store_true')
@@ -86,6 +84,14 @@ def main():
 
     assert noisy_spectra.shape == clean_spectra.shape, 'Mismatch between shapes of training and target data'
 
+    # load parameters for model
+    params = pickle.load(open(args.model.replace('.pt','.npy'),'rb'))['model']
+    train_mean = params['train_mean'] 
+    train_std = params['train_std'] 
+
+    if not args.seed:
+        args.seed = params['train_seed']
+
     # applying random seed for reproducability
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -99,29 +105,26 @@ def main():
 
     print(f'Number of examples to denoise: {len(val_dataset)}')
 
-    # get standardization parameters for model
-    params = pickle.load(open(args.model.replace('.pt','.npy'),'rb'))['model']
-    train_mean = params['train_mean'] 
-    train_std = params['train_std'] 
-
-
     # create batched data loaders for model
     val_loader = DataLoader(dataset=val_dataset, num_workers=os.cpu_count(), batch_size=args.batch_size, shuffle=False)
     print(f'Number of batches {len(val_loader)}')
 
     # create and load model
-    print(f'Loading model {args.model}')
-    if not args.res:
+    if params['model_name'] == 'DnCNN':
         model = DnCNN(num_channels=params['num_channels'], num_layers=params['num_layers'], \
                       kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']) 
-    else:
+    elif params['model_name'] == 'DnCNN-res':
         model = DnCNN_Res(num_channels=params['num_channels'], num_layers=params['num_layers'], \
                       kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']) 
+    else:
+        print(f'Model name {params["model_name"]} is not supported.')
+        return 1
 
     # prepare model for data parallelism (use multiple GPUs)
     model = torch.nn.DataParallel(model, device_ids=device_ids).cuda()
 
     # loaded saved model
+    print(f'Loading weights for {params["model_name"]} model from {args.model} for {params["model_type"]}')
     model.load_state_dict(torch.load(args.model))
 
     # Main training loop
@@ -149,10 +152,12 @@ def main():
             psnr_noisy = psnr_of_batch(clean_spectra, noisy_spectra)
 
             # save denoised spectrum
-            if not args.gennoise:
+            if params['model_type'] == 'Gen-spectrum':
                 denoised_spectrum = preds
             else:
                 denoised_spectrum = noisy_spectra-preds 
+
+            # add batch of denoised spectra to list of denoised spectra
             denoised.extend(denoised_spectrum.tolist()) 
 
             psnr_denoised = psnr_of_batch(clean_spectra, denoised_spectrum)

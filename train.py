@@ -72,8 +72,8 @@ def main():
 
     print(f'Loading dataset {args.det_type}')
     training_data = load_data(args.train_set, args.det_type.upper())
-    noisy_spectra = training_data['noisy']
-    target_spectra = training_data['clean']
+    noisy_spectra = training_data['noisy_spectrum']
+    target_spectra = training_data['spectrum']
 
     assert noisy_spectra.shape == target_spectra.shape, 'Mismatch between shapes of training and target data'
     noisy_spectra = np.expand_dims(noisy_spectra, axis=1)
@@ -138,7 +138,9 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     # data struct to track training and validation losses per epoch
-    model_params = {'num_channels':num_channels, \
+    model_params = {'model_name': 'DnCNN-res' if args.res else 'DnCNN', \
+                    'model_type': 'Gen-noise' if args.gennoise else 'Gen-spectrum', \
+                    'train_seed': args.seed, 'num_channels':num_channels, \
                     'num_layers':args.num_layers, 'kernel_size':args.filter_size,\
                     'stride':args.stride, 'num_filters':args.num_filters, \
                     'train_mean': train_mean, 'train_std': train_std}
