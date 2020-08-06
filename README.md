@@ -46,6 +46,14 @@ Algorithms for removing background, Compton scatter and detector noise from gamm
 
   Tests trained model on validation data, generates plots to view the results (default is clean generative model, "--gennoise" flag tests noise mask model).  
   
+- idCVX.py
+
+  Radionuclide classification script using convex optimization. Uses templates.h5 created by gen_templates.py script.
+
+- cvx.py
+
+  Convex optimization script adopted from Bart Massey's [sd code](https://github.com/BartMassey/sd) presented under the MIT license.
+  
 # Roadmap
 
 - [x] Build simulated datasets based on real detector properties
