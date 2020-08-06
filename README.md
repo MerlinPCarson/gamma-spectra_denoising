@@ -52,7 +52,7 @@ Algorithms for removing background, Compton scatter and detector noise from gamm
 - [x] Train Deep Learning models
   - [x] Generative convolutional model for clean gamma-spectra
   - [x] Generative convolutional model for noise mask
-- [ ] Experiment with Convex Optimization 
+- [x] Build radionuclide classifier with Convex Optimization (cvxpy)
 - [ ] Optimize algorithm parameters
   - [ ] Clean geneartive convolutional model
   - [ ] Noise mask generative convolutional model
