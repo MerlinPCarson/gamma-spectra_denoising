@@ -7,6 +7,7 @@ Algorithms for removing background, Compton scatter and detector noise from gamm
 * Pytorch
 * Sklearn
 * Scikit-Image
+* cvxpy
 
 # Scripts
 - gen_templates.py 
