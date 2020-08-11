@@ -1,6 +1,7 @@
 
 
 # Gamma-Spectra denoising
+### by Merlin Carson
 Algorithms for removing background, Compton scatter and detector noise from gamma-ray spectra.
 
 # Requirements
@@ -63,10 +64,10 @@ Algorithms for removing background, Compton scatter and detector noise from gamm
   - [x] Generative convolutional model for clean gamma-spectra
   - [x] Generative convolutional model for noise mask
 - [x] Build radionuclide classifier with Convex Optimization (cvxpy)
-- [ ] Optimize algorithm parameters
-  - [ ] Clean geneartive convolutional model
-  - [ ] Noise mask generative convolutional model
-  - [ ] Convex Optimization
+- [x] Optimize algorithm parameters
+  - [x] Clean geneartive convolutional model
+  - [x] Noise mask generative convolutional model
+  - [x] Convex Optimization
 - [ ] Compare results of approaches
 
 ## License
