@@ -7,7 +7,7 @@ import argparse
 import numpy as np
 from tqdm import tqdm
 
-from spectra_utils import load_radionuclide_nndc, generate_spectrum, plot_spectra
+from spectra_utils import load_radionuclide_nndc, generate_spectrum, plot_spectrum
 
 
 def load_nndc_tables(nndc_dir, radionuclides):
@@ -26,10 +26,10 @@ def generate_templates(config, nndc_tables, outdir, savefigs):
     templates = {}
     for rn_name, rn_values in tqdm(nndc_tables.items()):
         #print(f"building template for {rn_name}")
-        keV, intensity, _ = generate_spectrum(rn_values, config)
+        keV, intensity, _, _ = generate_spectrum(rn_values, config)
         templates[rn_name] = {"keV": keV, "intensity": intensity}
         if savefigs:
-            plot_spectra(keV, intensity, rn_name, outdir)
+            plot_spectrum(keV, intensity, rn_name, outdir)
 
     return templates
         
@@ -63,6 +63,7 @@ def main():
     #parser.add_argument("-det", "--dettype", help="detector type", default="HPGe")
     parser.add_argument("-nndc", "--nndctables", help="location of NNDC tables data",  default="nuclides-nndc")
     parser.add_argument("-sf", "--savefigs", help="saves plots of templates", action="store_true")
+    #parser.add_argument("-n", "--normalize", help="normalize templates by RMS", action="store_true")
     arg = parser.parse_args()
 
     outdir = os.path.dirname(arg.outfile)
