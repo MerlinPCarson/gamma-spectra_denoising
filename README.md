@@ -4,7 +4,7 @@
 ### by Merlin Carson
 Algorithms for removing background, Compton scatter and detector noise from gamma-ray spectra.
 
-This repo contains python scripts for simulating clean and noisy gamma-ray spectra, trainable Convolutional Neural Networks for denoising gamma-ray spectra, and a convex optimization based radionuclide classifier for gamma-ray spectra. The training script trains two variants of the denoising algorithm, one that predicts a noise mask that is then subtracted from the noisy spectra in post processing and one that directly predicts the denoised spectra. For each of these two variants there are two versions of Convolutional Neural Network models that can be used. The first model, a traditional Convolution Neural Network with a configurable number of layers and the second, a variant of the first with residual connections between every other layer, allowing for the training of ultra-deep (20+ layer) models.  
+This repo contains python scripts for simulating clean and noisy gamma-ray spectra, trainable Convolutional Neural Networks for denoising gamma-ray spectra, and a convex optimization based radionuclide classifier. The training script trains two variants of the denoising algorithm, one that predicts a noise mask that is then subtracted from the noisy spectra in post processing and one that directly predicts the denoised spectra. For each of these two variants there are two versions of Convolutional Neural Network models that can be used. The first model, a traditional Convolution Neural Network with a configurable number of layers and the second, a variant of the first with residual connections between every other layer, allowing for the training of ultra-deep (20+ layer) models.  
 
 # Requirements
 * Pytorch
