@@ -4,6 +4,8 @@
 ### by Merlin Carson
 Algorithms for removing background, Compton scatter and detector noise from gamma-ray spectra.
 
+This repo contains python scripts for simulating clean and noisy gamma-ray spectra, trainable convolutional neural networks for denoising gamma-ray spectra, and a convex optimization script for the classification of radionuclides in a gamma-ray spectrum.
+
 # Requirements
 * Pytorch
 * Sklearn
