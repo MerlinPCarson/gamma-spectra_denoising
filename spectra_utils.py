@@ -22,8 +22,8 @@ def split_radionuclide_name(rn_name):
 
 def plot_data(dataset):
     for i in range(len(dataset["name"])):
-        plt.plot(dataset["keV"], dataset["clean"][i], label='clean spectrum') 
-        plt.plot(dataset["keV"], dataset["noisy"][i], label='noisy spectrum') 
+        plt.plot(dataset["keV"], dataset["spectrum"][i], label='clean spectrum') 
+        plt.plot(dataset["keV"], dataset["noisy_spectrum"][i], label='noisy spectrum') 
         plt.plot(dataset["keV"], dataset["noise"][i], label='noise') 
         rn_num, rn_name = split_radionuclide_name(dataset["name"][i].decode('utf-8'))
         rn = "${}^{"+rn_num+"}{"+rn_name+"}$"

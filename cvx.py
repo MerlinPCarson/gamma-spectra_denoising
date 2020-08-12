@@ -46,7 +46,7 @@ def decompose(bases, spectrum, complete, normtype):
     # Form and solve problem.
     prob = cp.Problem(obj, constraints)
     prob.solve()
-    
+
     assert prob.status == cp.OPTIMAL or prob.status == cp.OPTIMAL_INACCURATE
     if prob.status == cp.OPTIMAL_INACCURATE:
         print("warning: analysis reports as inaccurate")
