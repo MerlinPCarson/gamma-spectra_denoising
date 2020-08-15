@@ -74,11 +74,17 @@ For the Generate Spectrum model I experimented with both the DnCNN model with up
 # Results
 
 ## Denoising
+
+Average PSNR of validation set before and after denoising.
+
 | | No Denoising| Noise Mask DnCNN | Gen Spectrum DnCNN-Res|
 |:--|:--:|:--:|:--:|
-|average PSNR|32.82dB|58.21dB (+25.39dB)|66.69dB (+33.87dB)|
+|PSNR|32.82dB|58.21dB (+25.39dB)|66.69dB (+33.87dB)|
 
 ## Classification
+
+Radionuclide classification using Convex Optimization before and after denoising.
+
 | | No Denoising| Noise Mask DnCNN | Gen Spectrum DnCNN-Res|
 |:--|:--:|:--:|:--:|
 |Accuracy|90.99%|???%|96.21%|
