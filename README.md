@@ -64,12 +64,12 @@ This repo contains python scripts for simulating clean and noisy gamma-ray spect
 ## Denoising
 | | No Denoising| Noise Mask CNN | Gen Spectrum CNN|
 |:--|:--:|:--:|:--:|
-|PSNR|???dB|???dB|???dB|
+|average PSNR|32.82dB|58.21dB (+25.39dB)|66.69dB (+33.87dB)|
 
 ## Classification
 | | No Denoising| Noise Mask CNN | Gen Spectrum CNN|
 |:--|:--:|:--:|:--:|
-|Accuracy|???%|???%|???%|
+|Accuracy|90.99%|???%|96.21%|
 
 # Roadmap
 
