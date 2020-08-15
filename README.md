@@ -59,6 +59,16 @@ This repo contains python scripts for simulating clean and noisy gamma-ray spect
 
   Convex optimization script adopted from Bart Massey's [sd code](https://github.com/BartMassey/sd) presented under the MIT license.
   
+# Training
+
+## Noise Mask Model (DnCNN)
+
+![](/figs/GenNoise_Train.png)
+
+## Generate Spectra Model (DnCNN-Res)
+
+![](/figs/GenSpec_Train.png)
+
 # Results
 
 ## Denoising
