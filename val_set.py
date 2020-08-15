@@ -20,7 +20,6 @@ def main():
     noise_scales = data['noise_scale'][()].astype(np.float32)
     compton_scales = data['compton_scale'][()].astype(np.float32)
     training_data = np.stack((names, noise_scales, compton_scales), axis=1)
-    #training_data = np.stack((data['name'], data['noise_scale'], data['compton_scale']), axis=1)
 
     x_train, x_val, _, _ = train_test_split(training_data, training_data, test_size = 0.1, random_state=42)
 
@@ -44,8 +43,8 @@ def main():
     match_spec = { 'name' : data['name'][data_idx][0].decode('utf-8'), 'spectrum': data['spectrum'][data_idx][0], \
                    'noisy_spectrum': data['noisy_spectrum'][data_idx][0], 'keV': data['keV'][()]}
 
-    plot_spectrum(match_spec['keV'], match_spec['spectrum'], match_spec['name'], 'tmp', show_plot=True)
-    plot_spectrum(match_spec['keV'], match_spec['noisy_spectrum'], match_spec['name'], 'tmp', show_plot=True)
+    plot_spectrum(match_spec['keV'], match_spec['spectrum'], match_spec['name'], 'tmp', title="Template", show_plot=True)
+    plot_spectrum(match_spec['keV'], match_spec['noisy_spectrum'], match_spec['name'], 'tmp', title="Noisy", show_plot=True)
 
     # load bases, clean radionuclide templates
     templates = load_templates('data/templates.h5', 'HPGE')
@@ -54,8 +53,10 @@ def main():
     # Eu152 template
     temp = bases[7]# / np.sqrt(np.sum(bases[7]**2))
     print(f'diff: {np.sum(np.abs(temp - match_spec["spectrum"]))}')
-    compare_spectra(match_spec['keV'], match_spec['spectrum'], temp, match_spec['name'], 'tmp', show_plot=True)
+
+    #compare_spectra(match_spec['keV'], match_spec['spectrum'], temp, match_spec['name'], 'tmp', show_plot=True)
     #spectrum /= np.sqrt(np.sum(spectrum**2))
+
 #   Test prediction on noisy data
     (ampl0, q) = cvx.decompose(bases, match_spec['spectrum'], False, 1)
     pred = np.argmax(ampl0)
@@ -75,14 +76,16 @@ def main():
     pred = np.argmax(ampl0)
     print(f"Pred is {templates['name'][pred]}, Target is {match_spec_dn['name']} ({ampl0[pred]})")
 
-    dn_psnr = psnr(match_spec['noisy_spectrum'], match_spec_dn['noisy_spectrum'], data_range=np.max(match_spec_dn['spectrum']))
+    dn_psnr = psnr(match_spec['noisy_spectrum'], match_spec_dn['noisy_spectrum'])
 
     print(f'PSNR: {dn_psnr}')
-    plot_spectrum(match_spec_dn['keV'], match_spec_dn['noisy_spectrum'], match_spec_dn['name'], 'tmp', show_plot=True)
+    plot_spectrum(match_spec_dn['keV'], match_spec_dn['noisy_spectrum'], match_spec_dn['name'], 'tmp', title='Denoised', show_plot=True)
 
-    compare_spectra(match_spec['keV'], match_spec['noisy_spectrum'], match_spec_dn['noisy_spectrum'], match_spec['name'], 'tmp', show_plot=True)
+    compare_spectra(match_spec['keV'], match_spec['noisy_spectrum'], match_spec_dn['noisy_spectrum'], match_spec['name'], 'tmp', \
+                    title1="Noisy", title2="Denoised", show_plot=True)
 
-    compare_spectra(match_spec['keV'], match_spec['spectrum'], match_spec_dn['noisy_spectrum'], match_spec['name'], 'tmp', show_plot=True)
+    compare_spectra(match_spec['keV'], match_spec['spectrum'], match_spec_dn['noisy_spectrum'], match_spec['name'], 'tmp', \
+                    title1="Template", title2="Denoised", show_plot=True)
 
     print(f'Script completed in {time.time()-start:.2f} secs')
 

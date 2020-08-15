@@ -31,12 +31,12 @@ def plot_data(dataset):
         plt.legend()
         plt.show()
 
-def plot_spectrum(keV, intensity, rn, outdir, show_plot=False):
+def plot_spectrum(keV, intensity, rn, outdir, title='', show_plot=False):
 
     rn_num, rn_name = split_radionuclide_name(rn)
 
     plt.figure(figsize=(20,10))
-    plt.plot(keV, intensity, label="${}^{"+rn_num+"}{"+rn_name+"}$ Template Spectrum", color='blue')
+    plt.plot(keV, intensity, label="${}^{"+rn_num+"}{"+rn_name+"}$ " +title+ " Spectrum", color='blue')
     
     ax = plt.gca()
     ax.set_xlabel('Energy (keV)', fontsize=18, fontweight='bold', fontname='cmtt10')
@@ -55,13 +55,13 @@ def plot_spectrum(keV, intensity, rn, outdir, show_plot=False):
 
     plt.close()
 
-def compare_spectra(keV, spectrum, noisy_spectrum, rn, outdir, show_plot=False):
+def compare_spectra(keV, spectrum, noisy_spectrum, rn, outdir, title1 = '', title2= '', show_plot=False):
 
     rn_num, rn_name = split_radionuclide_name(rn)
 
     plt.figure(figsize=(20,10))
-    plt.plot(keV, spectrum, label="${}^{"+rn_num+"}{"+rn_name+"}$ Target Spectrum", color='blue')
-    plt.plot(keV, noisy_spectrum, alpha=0.5, label="${}^{"+rn_num+"}{"+rn_name+"}$ Noisy Spectrum", color='red')
+    plt.plot(keV, spectrum, label="${}^{"+rn_num+"}{"+rn_name+"}$ "+title1+ " Spectrum", color='blue')
+    plt.plot(keV, noisy_spectrum, alpha=0.5, label="${}^{"+rn_num+"}{"+rn_name+"}$ "+title2+ " Spectrum", color='red')
     
     ax = plt.gca()
     ax.set_xlabel('Energy (keV)', fontsize=18, fontweight='bold', fontname='cmtt10')
