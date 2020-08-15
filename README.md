@@ -62,24 +62,73 @@ This repo contains python scripts for simulating clean and noisy gamma-ray spect
 # Training
 
 ## Noise Mask Model (DnCNN)
+While I did not have enough time to do a significant amount of hyperparameter tuning, I found that the Noise Mask model didn't perform well with over 20 convolutional layers. Therefore, for this model, I used the DnCNN with 20 convolutional layers since the DnCNN-Res is intended for training with more than 20 convolutional layers.
 
 ![](/figs/GenNoise_Train.png)
 
-## Generate Spectra Model (DnCNN-Res)
+## Generate Spectrum Model (DnCNN-Res)
+For the Generate Spectrum model I experimented with both the DnCNN model with up to 20 convolutional layers and the DnCNN-Res model with as many as 80 convolutional layers. I found the optimal number of layers to be 30. Thus, for this model I'm used the DnCNN-Res since the DnCNN does not perform well with more than 20 layers.
 
 ![](/figs/GenSpec_Train.png)
 
 # Results
 
 ## Denoising
-| | No Denoising| Noise Mask CNN | Gen Spectrum CNN|
+
+Average PSNR of validation set before and after denoising.
+
+| | No Denoising| Noise Mask DnCNN | Gen Spectrum DnCNN-Res|
 |:--|:--:|:--:|:--:|
-|average PSNR|32.82dB|58.21dB (+25.39dB)|66.69dB (+33.87dB)|
+|PSNR|32.82dB|58.21dB (+25.39dB)|66.69dB (+33.87dB)|
 
 ## Classification
-| | No Denoising| Noise Mask CNN | Gen Spectrum CNN|
+
+Radionuclide classification using Convex Optimization before and after denoising.
+
+| | No Denoising| Noise Mask DnCNN | Gen Spectrum DnCNN-Res|
 |:--|:--:|:--:|:--:|
 |Accuracy|90.99%|???%|96.21%|
+
+# Examples of the Gen Spectrum DnCNN-Res model
+
+### Europium-152 Template Spectrum for High Purity Germanium (HPGE) using Detector's Efficiency and Resolution
+
+![](/figs/eu152_template.png)
+
+### Simulated Spectrum for Europium-152 with Compton Scatter and Exponentially Decaying Noise
+
+![](/figs/eu152_noisy.png)
+
+### Denoised Simulated Noisy Spectrum (+25.92dB PSNR)
+
+![](/figs/eu152_denoised.png)
+
+### Comparison of Denoised Spectrum and Template Spectrum
+
+![](/figs/eu152_target_denoised.png)
+
+### Ytterbium-169 Template Spectrum for High Purity Germanium (HPGE) using Detector's Efficiency and Resolution
+
+![](/figs/yb169_template.png)
+  
+### Simulated Spectrum for Ytterbium-169 with Compton Scatter and Exponetially Decaying Noise
+
+![](/figs/yb169_noisy.png)
+
+### Denoised Simulated Noisy Spectrum  (+35.40dB PSNR)
+
+![](/figs/yb169_denoised.png)
+
+### Comparison of Denoised Spectrum and Template Spectrum
+
+![](/figs/yb169_target_denoised.png)
+
+
+# Conclusion
+
+It is clear that the Generate Spectrum model performs superiorly, averaging an almost 8.5dB PSNR improvment over the Noise Mask model. This is most likely due to the fact that photoelectric peaks are gaussian like in shape, which is a much easier distribution for a neural network to learn than the poisson distributed exponentially decaying noise. The batch normalization layers between each convolutional layer also help mitigate internal covariate shift, which keeps the parameters centered around a mean of zero with unit variance. Thus, making models more capable of learning normal distributions. 
+
+It is clear that there is some amount of data lost during the denoising process for very small photopeaks and when there is a spike in noise around a photopeak. However, the majority and the strongest photopeaks are clearly maintained almost perfectly, while the rest of the spectrum is almost entirely surpressed. These strong, presistent photopeaks are the clearest identifiers for the classification of radionuclides and therefore the convex optimization algorithm performs better after denoising than before, despite loss of information. The denoising also results in sparse representations of the spectra which makes classification more efficient.
 
 # Roadmap
 
@@ -92,7 +141,7 @@ This repo contains python scripts for simulating clean and noisy gamma-ray spect
   - [x] Clean geneartive convolutional model
   - [x] Noise mask generative convolutional model
   - [x] Convex Optimization
-- [ ] Compare results of approaches
+- [x] Compare results of approaches
 
 # Future Work
 - [ ] Use GADRAS or MCNP to generate more realistic clean and noisy spectra
