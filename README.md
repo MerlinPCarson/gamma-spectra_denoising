@@ -99,7 +99,7 @@ Radionuclide classification using Convex Optimization before and after denoising
 
 ![](/figs/eu152_noisy.png)
 
-### Denoised Simulated Noisy Spectrum
+### Denoised Simulated Noisy Spectrum (+25.92dB PSNR)
 
 ![](/figs/eu152_denoised.png)
 
@@ -115,7 +115,7 @@ Radionuclide classification using Convex Optimization before and after denoising
 
 ![](/figs/yb169_noisy.png)
 
-### Denoised Simulated Noisy Spectrum
+### Denoised Simulated Noisy Spectrum  (+35.40dB PSNR)
 
 ![](/figs/yb169_denoised.png)
 
@@ -128,7 +128,7 @@ Radionuclide classification using Convex Optimization before and after denoising
 
 It is clear that the Generate Spectrum model performs superiorly, averaging an almost 8.5dB PSNR improvment over the Noise Mask model. This is most likely due to the fact that photoelectric peaks are gaussian like in shape, which is a much easier distribution for a neural network to learn than the poisson distributed exponentially decaying noise. The batch normalization layers between each convolutional layer also help mitigate internal covariate shift, which keeps the parameters centered around a mean of zero with unit variance. Thus, making models more capable of learning normal distributions. 
 
-It is clear that there is some amount of data lost during the denoising process for very small photopeaks and when there is a spike in noise around a photopeak. However, the majority and the strongest photopeaks are clearly maintained almost perfectly, while the rest of the spectrum is almost entirely surpressed. These strong, presistent photopeaks are the clearest identifiers for the classification of radionuclides and therefore the convex optimization algorithm performs better after denoising than before, despite some small amount of information being lost. The denoising also results in sparse representations of the spectra which makes classification more efficient.
+It is clear that there is some amount of data lost during the denoising process for very small photopeaks and when there is a spike in noise around a photopeak. However, the majority and the strongest photopeaks are clearly maintained almost perfectly, while the rest of the spectrum is almost entirely surpressed. These strong, presistent photopeaks are the clearest identifiers for the classification of radionuclides and therefore the convex optimization algorithm performs better after denoising than before, despite loss of information. The denoising also results in sparse representations of the spectra which makes classification more efficient.
 
 # Roadmap
 
