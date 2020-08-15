@@ -4,7 +4,7 @@
 ### by Merlin Carson
 Algorithms for removing background, Compton scatter and detector noise from gamma-ray spectra.
 
-This repo contains python scripts for simulating clean and noisy gamma-ray spectra, trainable Convolutional Neural Networks for denoising gamma-ray spectra, and a convex optimization based radionuclide classifier. The training script trains two variants of the denoising algorithm, one that predicts a noise mask that is then subtracted from the noisy spectra in post processing and one that directly predicts the denoised spectra. For each of these two variants there are two versions of Convolutional Neural Network models that can be used. The first model, a traditional Convolution Neural Network with a configurable number of layers and the second, a variant of the first with residual connections between every other layer, allowing for the training of ultra-deep (20+ layer) models.  
+This repo contains python scripts for simulating clean and noisy gamma-ray spectra for 3 types of gamma-ray detectors (HPGe, NaI, CZT), trainable Convolutional Neural Networks for denoising gamma-ray spectra, and a convex optimization based radionuclide classifier. The training script trains two variants of the denoising algorithm, one that predicts a noise mask (Noise Mask Model) that is then subtracted from the noisy spectra in post processing and one that directly predicts the denoised spectra (Generate Spectrum Model). For each of these two variants there are two versions of Convolutional Neural Network that can be used. The first, a traditional Convolution Neural Network with ReLU activation and batch normalization for each convolutional layer, and a configurable number of these blocks. The second is a variant of the first with residual connections between every other convolutional layer block, allowing for the training of ultra-deep (20+ layer) models.  
 
 # Requirements
 * Pytorch
@@ -49,7 +49,7 @@ This repo contains python scripts for simulating clean and noisy gamma-ray spect
 - model.py
 
   Contains Convolutional model classes. DnCNN (denoising CNN) and DnCNN-Res (denoising CNN with residual blocks).
-  * DnCNN is an image denoising CNN developed by Zhang el al. ([Beyond a Gaussian Denoiser: Residual Learning of Deep CNN for Image Denoising](https://arxiv.org/pdf/1608.03981.pdf)) which I've implemented using Pytorch and converted the 2D-Convolutional layers to 1D. The DnCNN-Res is an amalgamation of the DnCNN model and the Res-Net model ([Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)) I developed by adding skip connections between every other Convolutional layer, which allows for the training of ultra-deep models without encountering the problem of vanishing gradients.
+  * DnCNN is an image denoising CNN developed by Zhang el al. ([Beyond a Gaussian Denoiser: Residual Learning of Deep CNN for Image Denoising](https://arxiv.org/pdf/1608.03981.pdf)) which I've implemented using Pytorch and converted the 2D-convolutional layers to 1D. The DnCNN-Res is an amalgamation of the DnCNN model and the Res-Net model ([Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)) that I developed by adding skip connections between every other convolutional layer block, which allows for the training of ultra-deep models without encountering the problem of vanishing gradients.
   
 - train.py
 
