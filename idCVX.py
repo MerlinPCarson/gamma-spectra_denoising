@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import h5py
@@ -35,7 +36,7 @@ def main():
     
     dataset = load_data(arg.datafile, arg.dettype.upper(), show_data=arg.showfigs)
 
-    print(f'{len(dataset)} loaded.')
+    print(f'{len(dataset["name"])} loaded.')
 
     dataset_stats(dataset, arg.dettype)
 
@@ -58,6 +59,11 @@ def main():
 
     accuracy = np.sum(preds==targets)/len(preds)
     print(f'Identification Accuracy: {accuracy}')
+    
+    results = preds == targets
+    outname = os.path.basename(arg.datafile).replace('.h5','.npy')
+    with open(outname, 'wb') as f:
+        np.save(f, results)
 
     print(f'\nScript completed in {time.time()-start:.2f} secs')
 

@@ -62,9 +62,7 @@ def main():
     else:
         # make sure output dirs exists
         os.makedirs(args.outdir, exist_ok=True)
-        
-    print(f'args output {args.outdir}')
-
+       
     # make sure data files exist
     assert os.path.exists(args.test_set), f'Cannot find testset vectors file {args.test_set}'
 
@@ -86,6 +84,7 @@ def main():
 
     # load parameters for model
     params = pickle.load(open(args.model.replace('.pt','.npy'),'rb'))['model']
+
     train_mean = params['train_mean'] 
     train_std = params['train_std'] 
 
@@ -155,6 +154,7 @@ def main():
             if params['model_type'] == 'Gen-spectrum':
                 denoised_spectrum = preds
             else:
+                print('subtracting predicted noise from spectra')
                 denoised_spectrum = noisy_spectra-preds 
 
             # add batch of denoised spectra to list of denoised spectra
@@ -171,9 +171,10 @@ def main():
     if args.all:
         assert len(test_data['noisy_spectrum']) == len(denoised), f'{len(test_data["noisy_spectrum"])} examples yet {len(denoised)} denoised' 
         denoised = np.squeeze(np.array(denoised))
-        print(f'denoised shape {denoised.shape}')
         test_data['noisy_spectrum'] = denoised 
-        save_dataset(args.dettype.upper(), test_data, os.path.join(args.outdir, args.outfile))
+        outfile = os.path.join(args.outdir, args.outfile)
+        print(f'Saving denoised spectrum to {outfile}')
+        save_dataset(args.dettype.upper(), test_data, outfile)
 
     avg_psnr_noisy = total_psnr_noisy/len(val_loader)
     avg_psnr_denoised = total_psnr_denoised/len(val_loader)
