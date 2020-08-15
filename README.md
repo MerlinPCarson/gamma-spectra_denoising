@@ -57,11 +57,11 @@ This repo contains python scripts for simulating clean and noisy gamma-ray spect
   
 - denoise.py
 
-  Tests trained model on validation data, generates plots to view the results (default is clean generative model, "--gennoise" flag tests noise mask model).  
+  Tests trained model on validation data, generates plots to view the results. The model type and network parameters are loaded from the model history file (best_model.npy) generated during training.  
   
 - idCVX.py
 
-  Radionuclide classification script using convex optimization. Uses templates.h5 created by gen_templates.py script.
+  Radionuclide classification script using convex optimization. Uses templates.h5 created by gen_templates.py script for the bases. Loads spectra from a .h5 file created by build_dataset or denoising script.
 
 - cvx.py
 
