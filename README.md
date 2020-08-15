@@ -53,7 +53,7 @@ This repo contains python scripts for simulating clean and noisy gamma-ray spect
   
 - train.py
 
-  Trains a Convolutional model for denoising gamma-spectra using training set created by build_dataset (default model predicts clean spectra, "--gennoise" flag trains model that predicts noise mask).
+  Trains a Convolutional model for denoising gamma-ray spectra using the training set created by build_dataset. Default model predicts clean spectra (Generate Spectrum Model), "--gennoise" flag trains model that predicts noise in spectrum (Noise Mask Model). The DnCNN network with 20 convolutional layer blocks is used by default, use "--num_layers" to change the number of layer blocks, use "--res" flag for DnCNN-Res 
   
 - denoise.py
 
