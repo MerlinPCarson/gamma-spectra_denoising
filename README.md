@@ -91,11 +91,11 @@ Radionuclide classification using Convex Optimization before and after denoising
 
 # Examples of the Gen Spectrum DnCNN-Res model
 
-### Europium-152 Template Spectrum for High Purity Germanium (HPGE) Detector Type
+### Europium-152 Template Spectrum for High Purity Germanium (HPGE) using Detector's Efficiency and Resolution
 
 ![](/figs/eu152_template.png)
 
-### Simulated Spectrum for Europium-152 with Compton Scatter and Exponentially Decaying Noise, and applying Detector's Efficiency
+### Simulated Spectrum for Europium-152 with Compton Scatter and Exponentially Decaying Noise
 
 ![](/figs/eu152_noisy.png)
 
@@ -107,11 +107,11 @@ Radionuclide classification using Convex Optimization before and after denoising
 
 ![](/figs/eu152_target_denoised.png)
 
-### Ytterbium-169 Template Spectrum for High Purity Germanium (HPGE) Detector Type
+### Ytterbium-169 Template Spectrum for High Purity Germanium (HPGE) using Detector's Efficiency and Resolution
 
 ![](/figs/yb169_template.png)
   
-### Simulated Spectrum for Ytterbium-169 with Compton Scatter and Exponetially Decaying Noise, and applying Detector's Efficiency
+### Simulated Spectrum for Ytterbium-169 with Compton Scatter and Exponetially Decaying Noise
 
 ![](/figs/yb169_noisy.png)
 
@@ -122,6 +122,13 @@ Radionuclide classification using Convex Optimization before and after denoising
 ### Comparison of Denoised Spectrum and Template Spectrum
 
 ![](/figs/yb169_target_denoised.png)
+
+
+# Conclusion
+
+It is clear that the Generate Spectrum model performs superiorly, averaging an almost 8.5dB PSNR improvment over the Noise Mask model. This is most likely due to the fact that photoelectric peaks are gaussian like in shape, which is a much easier distribution for a neural network to learn than the poisson distributed exponentially decaying noise. The batch normalization layers between each convolutional layer also help mitigate internal covariate shift, which keeps the parameters centered around a mean of zero with unit variance. Thus, making models more capable of learning normal distributions. 
+
+It is clear that there is some amount of data lost during the denoising process for very small photopeaks and when there is a spike in noise around a photopeak. However, the majority and the strongest photopeaks are clearly maintained almost perfectly, while the rest of the spectrum is almost entirely surpressed. These strong, presistent photopeaks are the clearest identifiers for the classification of radionuclides and therefore the convex optimization algorithm performs better after denoising than before, despite some small amount of information being lost. The denoising also results in sparse representations of the spectra which makes classification more efficient.
 
 # Roadmap
 
