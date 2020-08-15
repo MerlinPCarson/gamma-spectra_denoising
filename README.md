@@ -65,22 +65,47 @@ This repo contains python scripts for simulating clean and noisy gamma-ray spect
 
 ![](/figs/GenNoise_Train.png)
 
-## Generate Spectra Model (DnCNN-Res)
+## Generate Spectrum Model (DnCNN-Res)
 
 ![](/figs/GenSpec_Train.png)
 
 # Results
 
 ## Denoising
-| | No Denoising| Noise Mask CNN | Gen Spectrum CNN|
+| | No Denoising| Noise Mask DnCNN | Gen Spectrum DnCNN-Res|
 |:--|:--:|:--:|:--:|
 |average PSNR|32.82dB|58.21dB (+25.39dB)|66.69dB (+33.87dB)|
 
 ## Classification
-| | No Denoising| Noise Mask CNN | Gen Spectrum CNN|
+| | No Denoising| Noise Mask DnCNN | Gen Spectrum DnCNN-Res|
 |:--|:--:|:--:|:--:|
 |Accuracy|90.99%|???%|96.21%|
 
+# Examples of the Gen Spectrum DnCNN-Res model
+
+### Template Spectrum for Europium-152
+
+![](/figs/eu152_template.png)
+
+### Simulated Spectrum for Europium-152 with Compton Scatter and Exponentially Decaying Noise
+
+![](/figs/eu152_noisy.png)
+
+### Denoised Simulated Noisy Spectrum
+
+![](/figs/eu152_denoised.png)
+
+### Comparison of Denoised Spectrum and Template Spectrum
+
+![](/figs/eu152_target_denoised.png)
+
+### Template Spectrum for Ytterbium-169
+
+![](/figs/yb169_template.png)
+  
+### Template Spectrum for Ytterbium-169 with simulated Compton and Exponetially Decaying Noise
+
+![](/figs/yb169_noisy.png)
 # Roadmap
 
 - [x] Build simulated datasets based on real detector properties
