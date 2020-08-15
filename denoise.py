@@ -154,7 +154,6 @@ def main():
             if params['model_type'] == 'Gen-spectrum':
                 denoised_spectrum = preds
             else:
-                print('subtracting predicted noise from spectra')
                 denoised_spectrum = noisy_spectra-preds 
 
             # add batch of denoised spectra to list of denoised spectra
