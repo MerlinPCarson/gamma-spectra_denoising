@@ -13,9 +13,13 @@ This repo contains python scripts for simulating clean and noisy gamma-ray spect
 * cvxpy
 * h5py
 
-> An NVIDIA GPU:
+<pre>  An NVIDIA GPU: 
 
- >> The training and denoising scripts are written to support the use of multiple GPUs. While they will run correctly on a single GPU, they will not run on the CPU. All other scripts run solely on the CPU.
+  The training and denoising scripts are written to support the use of multiple GPUs. 
+  While they will run correctly on a single GPU, they will not run on the CPU. 
+  All other scripts run solely on the CPU.
+  
+</pre>
 
 # Scripts
 - gen_templates.py 
