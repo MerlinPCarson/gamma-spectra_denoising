@@ -62,10 +62,12 @@ This repo contains python scripts for simulating clean and noisy gamma-ray spect
 # Training
 
 ## Noise Mask Model (DnCNN)
+While I did not have enough time to do a significant amount of hyperparameter tuning, I found that the Noise Mask model didn't perform well with over 20 convolutional layers. Therefore, for this model, I used the DnCNN with 20 convolutional layers since the DnCNN-Res is intended for training with more than 20 convolutional layers.
 
 ![](/figs/GenNoise_Train.png)
 
 ## Generate Spectrum Model (DnCNN-Res)
+For the Generate Spectrum model I experimented with both the DnCNN model with up to 20 convolutional layers and the DnCNN-Res model with as many as 80 convolutional layers. I found the optimal number of layers to be 30. Thus, for this model I'm used the DnCNN-Res since the DnCNN does not perform well with more than 20 layers.
 
 ![](/figs/GenSpec_Train.png)
 
@@ -83,11 +85,11 @@ This repo contains python scripts for simulating clean and noisy gamma-ray spect
 
 # Examples of the Gen Spectrum DnCNN-Res model
 
-### Template Spectrum for Europium-152
+### Europium-152 Template Spectrum for High Purity Germanium (HPGE) Detector Type
 
 ![](/figs/eu152_template.png)
 
-### Simulated Spectrum for Europium-152 with Compton Scatter and Exponentially Decaying Noise
+### Simulated Spectrum for Europium-152 with Compton Scatter and Exponentially Decaying Noise, and applying Detector's Efficiency
 
 ![](/figs/eu152_noisy.png)
 
@@ -99,13 +101,22 @@ This repo contains python scripts for simulating clean and noisy gamma-ray spect
 
 ![](/figs/eu152_target_denoised.png)
 
-### Template Spectrum for Ytterbium-169
+### Ytterbium-169 Template Spectrum for High Purity Germanium (HPGE) Detector Type
 
 ![](/figs/yb169_template.png)
   
-### Template Spectrum for Ytterbium-169 with simulated Compton and Exponetially Decaying Noise
+### Simulated Spectrum for Ytterbium-169 with Compton Scatter and Exponetially Decaying Noise, and applying Detector's Efficiency
 
 ![](/figs/yb169_noisy.png)
+
+### Denoised Simulated Noisy Spectrum
+
+![](/figs/yb169_denoised.png)
+
+### Comparison of Denoised Spectrum and Template Spectrum
+
+![](/figs/yb169_target_denoised.png)
+
 # Roadmap
 
 - [x] Build simulated datasets based on real detector properties
@@ -117,7 +128,7 @@ This repo contains python scripts for simulating clean and noisy gamma-ray spect
   - [x] Clean geneartive convolutional model
   - [x] Noise mask generative convolutional model
   - [x] Convex Optimization
-- [ ] Compare results of approaches
+- [x] Compare results of approaches
 
 # Future Work
 - [ ] Use GADRAS or MCNP to generate more realistic clean and noisy spectra
