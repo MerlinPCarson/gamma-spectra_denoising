@@ -83,7 +83,7 @@ For the Generate Spectrum model I experimented with both the DnCNN model with up
 
 ## Denoising
 
-Average PSNR of validation set before and after denoising.
+Average PSNR of validation set (lowest PSNR is 13.34dB, highest PSNR is 51.85dB) before and after denoising.
 
 | | No Denoising| Noise Mask DnCNN | Gen Spectrum DnCNN-Res|
 |:--|:--:|:--:|:--:|
