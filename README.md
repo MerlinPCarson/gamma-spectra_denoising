@@ -59,6 +59,18 @@ This repo contains python scripts for simulating clean and noisy gamma-ray spect
 
   Convex optimization script adopted from Bart Massey's [sd code](https://github.com/BartMassey/sd) presented under the MIT license.
   
+# Results
+
+## Denoising
+| | No Denoising| Noise Mask CNN | Gen Spectrum CNN|
+|:--|:--:|:--:|:--:|
+|PSNR|???dB|???dB|???dB|
+
+## Classification
+| | No Denoising| Noise Mask CNN | Gen Spectrum CNN|
+|:--|:--:|:--:|:--:|
+|Accuracy|???%|???%|???%|
+
 # Roadmap
 
 - [x] Build simulated datasets based on real detector properties
