@@ -3,6 +3,7 @@ import time
 import h5py
 import argparse
 import numpy as np
+from skimage.metrics import peak_signal_noise_ratio as psnr
 
 from spectra_utils import split_radionuclide_name, plot_data
 
@@ -19,7 +20,7 @@ def load_data(datafile, det, show_data=False):
     return dataset
 
 def dataset_stats(dataset, det):
-    print(f'Dataset {det}')
+    print(f'Dataset {det}:')
     print(f'\tfeatures: {dataset["keV"].shape}')
     print(f'\tclean spectra: {dataset["spectrum"].shape}')
     print(f'\tnoisy spectra: {dataset["noisy_spectrum"].shape}')
@@ -28,6 +29,22 @@ def dataset_stats(dataset, det):
     print(f'\tmax Compton scale: {np.max(dataset["compton_scale"])}')
     print(f'\tmin Noise scale: {np.min(dataset["noise_scale"])}')
     print(f'\tmax Noise scale: {np.max(dataset["noise_scale"])}')
+
+    noisy_spectra = dataset['noisy_spectrum']
+    clean_spectra = dataset['spectrum']
+
+    min_psnr = 9999.0
+    max_psnr = 0.0
+    for clean, noisy in zip(clean_spectra, noisy_spectra):
+        noisy_psnr = psnr(clean, noisy)
+        if noisy_psnr < min_psnr:
+            min_psnr = noisy_psnr
+        if noisy_psnr > max_psnr:
+            max_psnr = noisy_psnr
+
+    print(f'\tmax PSNR {max_psnr:.2f} dB')
+    print(f'\tmin PSNR {min_psnr:.2f} dB')
+
 
 def main():
     start = time.time()
@@ -38,9 +55,10 @@ def main():
     parser.add_argument("-sf", "--showfigs", help="saves plots of data", default=False, action="store_true")
     arg = parser.parse_args()
 
+    print(f'Loading data set from {arg.datafile}')
     dataset = load_data(arg.datafile, arg.dettype.upper(), show_data=arg.showfigs)
 
-    print(f'{len(dataset)} loaded.')
+    print(f'{len(dataset["name"])} examples in dataset.')
 
     dataset_stats(dataset, arg.dettype)
 
