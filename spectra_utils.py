@@ -192,6 +192,25 @@ def generate_spectrum_SNR(rn_table, config, background, snr=0.0, compton_scale=0
     # normalize spectrum vector by its magnitude
     background /= np.sqrt(np.sum(background**2))
 
+    # calculate RMS of signal and noise
+    sRMS = np.sqrt(np.mean(spectrum**2))
+    nRMS = np.sqrt(np.mean(background**2))
+
+    print(f"SNR background: {20*np.log10(sRMS/nRMS)}")
+    cRMS = np.sqrt(np.mean(compton**2))
+    #print(f"SNR Compton: {20*np.log10(sRMS/nRMS)}")
+
+    # SNR in linear terms
+    snr_lin = np.power(10, snr/20.0)
+
+    # calculate scalar value on noise to combine sources to match desired SNR
+    if sRMS > 0 and nRMS > 0:
+        noise_scale = (sRMS+cRMS)/(nRMS*snr_lin)
+        background *= noise_scale
+
+        nRMS = np.sqrt(np.mean(background**2))
+        print(f"SNR adjusted background: {20*np.log10(sRMS/nRMS)}")
+
     # combine background and compton as noise source
     noise = background + compton
 

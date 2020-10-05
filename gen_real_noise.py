@@ -60,9 +60,9 @@ def main():
     parser.add_argument("-maxsnr", "--maxsnr", help="maximum noise SNR", default=5.0, type=float)
     parser.add_argument("-minsnr", "--minsnr", help="minimum noise SNR", default=-5.0, type=float)
     parser.add_argument("-snrstep", "--snrstep", help="SNR step between min and max snr", default=5, type=int)
-    parser.add_argument("-maxc", "--maxcompton", help="maximum Compton scale", default=0.1, type=float)
+    parser.add_argument("-maxc", "--maxcompton", help="maximum Compton scale", default=0.5, type=float)
     parser.add_argument("-minc", "--mincompton", help="minimum Compton scale", default=0.0, type=float)
-    parser.add_argument("-cstep", "--comptonstep", help="Compton scale step between min and max Compton", default=.1, type=int)
+    parser.add_argument("-cstep", "--comptonstep", help="Compton scale step between min and max Compton", default=.5, type=int)
     arg = parser.parse_args()
 
     dettype = arg.dettype
