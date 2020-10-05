@@ -65,25 +65,27 @@ def plot_spectrum(keV, intensity, rn, outdir, title='', show_plot=False):
 
     plt.close()
 
-def compare_spectra(keV, spectrum, noisy_spectrum, rn, outdir, title1 = '', title2= '', show_plot=False):
+def compare_spectra(keV, spectrum, noisy_spectrum, noise, rn, outdir, title1 = '', title2= '', show_plot=False):
 
     rn_num, rn_name = split_radionuclide_name(rn)
 
     plt.figure(figsize=(20,10))
     plt.plot(keV, spectrum, label="${}^{"+rn_num+"}{"+rn_name+"}$ "+title1+ " Spectrum", color='blue')
     plt.plot(keV, noisy_spectrum, alpha=0.5, label="${}^{"+rn_num+"}{"+rn_name+"}$ "+title2+ " Spectrum", color='red')
+    plt.plot(keV, noise, alpha=0.5, label="background + Compton", color='green')
     
     ax = plt.gca()
     ax.set_xlabel('Energy (keV)', fontsize=18, fontweight='bold', fontname='cmtt10')
     ax.set_ylabel('Intensity', fontsize=18, fontweight='bold', fontname='cmtt10')
-    ax.set_xticks(np.arange(keV[0], keV[-1], 50))
-    ax.set_xticks(np.arange(keV[0], keV[-1], 10), minor=True)
+    ax.set_xticks(np.arange(keV[0], keV[-1], 100))
+    ax.set_xticks(np.arange(keV[0], keV[-1], 20), minor=True)
+    ax.set_xlim([0,keV[-1]])
     ax.grid(axis='x', which='major', alpha=0.5)
     ax.grid(axis='x', which='minor', alpha=0.2)
 
     plt.legend(fancybox=True, shadow=True, fontsize=11)
     plt.tight_layout()
-    plt.savefig(os.path.join(outdir, rn) + '-noisy.png', format='png')
+    #plt.savefig(os.path.join(outdir, rn) + '-noisy.png', format='png')
 
     if show_plot:
         plt.show()
@@ -128,18 +130,15 @@ def load_radionuclide_nndc(root, rn):
     return radionuclide['keV'], radionuclide['intensity']
 
 
-def rn_table_to_spec(rn_table, eff_vals):
+def rn_table_to_spec(spectrum_keV, peak_keVs, peak_intensities, bucket_size, max_keV):
 
-    assert len(rn_table["keV"]) == len(rn_table["intensity"]), "Mismatch in number of energy and intensity values!"
-
-    # account for detector efficiency
-    peak_intensities = apply_efficiency_curve(rn_table["keV"], rn_table["intensity"], eff_vals)
+    spectrum = np.zeros_like(spectrum_keV)
 
     # load peak values into spectrum
-    for k, i in zip(rn_table["keV"], peak_intensities):
+    for k, i in zip(peak_keVs, peak_intensities):
 
         # check bounds 
-        if (k < min_keV) or (k >= max_keV + bucket_size):
+        if k >= max_keV + bucket_size:
             continue
 
         ki = np.searchsorted(spectrum_keV, k, side='right')-1
@@ -148,41 +147,60 @@ def rn_table_to_spec(rn_table, eff_vals):
 
     return spectrum
 
-def gen_compton(compton, max_kev)
+def gen_compton(spectrum, spectrum_keV, peak_keVs, peak_intensities, bucket_size, max_kev, compton_scale, det_material):
 
-    for ke, i in zip(rn_table["keV"], peak_intensities):
+    compton = np.zeros_like(spectrum_keV)
+
+    for ke, i in zip(peak_keVs, peak_intensities):
         # don't add compton to templates for PE above keV vals in spectrum or below min efficiency
-        if (ke >= spectrum_keV[-1] + bucket_size) or (ke < min_efficiency):
+        if (ke >= spectrum_keV[-1] + bucket_size):
             continue
         # find new intensity given detecotr efficiency
         ki = np.searchsorted(spectrum_keV, ke, side='right')-1
         ki = min(ki, spectrum_keV.shape[0]-1)
         i = spectrum[ki]
-        compton += compton_continuum(ke, i, spectrum_keV, spectrum, compton_scale, config["ATOMIC_NUM"])
+        compton += compton_continuum(ke, i, spectrum_keV, spectrum, compton_scale, det_material)
 
     return compton
 
-def generate_spectrum_SNR(rn_table, config, snr=0.0, compton_scale=0.0, min_efficiency=50):
+def generate_spectrum_SNR(rn_table, config, background, snr=0.0, compton_scale=0.0):
 
     # create data structure and stats for spectram
     min_keV = config["ENER_FIT"][0]
     bucket_size = config["ENER_FIT"][1]
     max_keV = bucket_size * (config["NUM_CHANNELS"]-1) + min_keV
     spectrum_keV = np.linspace(min_keV, max_keV, config["NUM_CHANNELS"])
-    spectrum = np.zeros_like(spectrum_keV)
-    compton = np.zeros_like(spectrum_keV)
-    noise = np.zeros_like(spectrum_keV)
+#    noise = np.zeros_like(spectrum_keV)
+
+    assert len(rn_table["keV"]) == len(rn_table["intensity"]), "Mismatch in number of energy and intensity values!"
+
+    # account for detector efficiency
+    peak_intensities = apply_efficiency_curve(rn_table["keV"], rn_table["intensity"], config['EFFICIENCY'])
 
     # convert NNDC radionuclide table features to spectrum
-    spectrum = rn_table_to_spec(spectrum, rn_table, config['EFFICIENCY'])
+    spectrum = rn_table_to_spec(spectrum_keV, rn_table["keV"], rn_table["intensity"], bucket_size, max_keV)
 
+    # widen peaks to match detector resolution 
+    spectrum = data_smooth(spectrum_keV, spectrum, **config['SMOOTH_PARAMS'])
+    
     # normalize spectrum vector by its magnitude
     spectrum /= np.sqrt(np.sum(spectrum**2))
 
     # generate Compton scatter from spectrum
-    compton = gen_compton(compton, )
+    compton = gen_compton(spectrum, spectrum_keV, rn_table["keV"], peak_intensities, bucket_size, max_keV, compton_scale, config["ATOMIC_NUM"])
 
-def generate_spectrum(rn_table, config, compton_scale=0.0, min_efficiency=50, alpha=0.0035, noise_scale=0.0):
+    # normalize spectrum vector by its magnitude
+    background /= np.sqrt(np.sum(background**2))
+
+    # combine background and compton as noise source
+    noise = background + compton
+
+    # combine clean spectrum and noise sources
+    noise_spec = spectrum + noise 
+
+    return spectrum_keV, spectrum, noise_spec, noise
+
+def generate_spectrum(rn_table, config, compton_scale=0.0, min_efiency=50, alpha=0.0035, noise_scale=0.0):
 
     # create data structure and stats for spectram
     min_keV = config["ENER_FIT"][0]
