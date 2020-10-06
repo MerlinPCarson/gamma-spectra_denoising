@@ -7,27 +7,45 @@ import argparse
 import numpy as np
 from tqdm import tqdm
 
-from spectra_utils import load_nndc_tables, load_radionuclide_nndc, generate_spectrum_SNR, compare_spectra
-#from spectra_utils import load_radionuclide_nndc, generate_spectrum, compare_spectra
+from spectra_utils import load_nndc_tables
+from spectra_utils import generate_clean_spectra, generate_spectrum_SNR, generate_compton
+from spectra_utils import compare_three_spectra
 
 
 def generate_spectra(config, nndc_tables, params, outdir):
 
+    # create data structure and stats for spectram
+    min_keV = config["ENER_FIT"][0]
+    bucket_size = config["ENER_FIT"][1]
+    max_keV = bucket_size * (config["NUM_CHANNELS"]-1) + min_keV
+    spectrum_keV = np.linspace(min_keV, max_keV, config["NUM_CHANNELS"])
+
     background = json.load(open("background/NaI/BG1200s-U.json"))
     bg_intensities = np.array(background["HIT"], dtype=np.float32)
+
     spectra = {"name": [], "spectrum": [], "noisy_spectrum": [], "noise": [], "compton_scale": [], "SNR": []} 
     for rn_name, rn_values in tqdm(nndc_tables.items()):
-        for compton_scale, snr in params:
-            spectrum_keV, spectrum, noisy_spectrum, noise = generate_spectrum_SNR(rn_values, config, bg_intensities, compton_scale=compton_scale, snr=snr)
-            spectra["name"].append(rn_name.encode('utf-8'))
-            spectra["spectrum"].append(spectrum)
-            spectra["noisy_spectrum"].append(noisy_spectrum)
-            spectra["noise"].append(noise)
-            spectra["compton_scale"].append(compton_scale)
-            spectra["SNR"].append(snr)
+        # generate radionuclide template spectrum from NNDC tables values
+        rn_spectrum, peak_intensities = generate_clean_spectra(rn_values, config, bucket_size, max_keV, spectrum_keV)
 
-            if True:
-                compare_spectra(spectrum_keV, spectrum, noisy_spectrum, noise, rn_name, outdir, title1='template', title2='noisy', show_plot=True)
+        for compton_scale in params['Compton']:
+            # generate Compton scatter from spectrum given scale
+            compton = generate_compton(rn_spectrum, spectrum_keV, rn_values["keV"], peak_intensities, max_keV, compton_scale, config["ATOMIC_NUM"])
+
+            for snr in params['SNR']:
+                # combine clean spectrum, background and Compton to achive desired SNR
+                spectrum_keV, spectrum, noisy_spectrum, noise = generate_spectrum_SNR(rn_spectrum, spectrum_keV, bg_intensities, compton, snr)
+                spectra["name"].append(rn_name.encode('utf-8'))
+                spectra["spectrum"].append(spectrum)
+                spectra["noisy_spectrum"].append(noisy_spectrum)
+                spectra["noise"].append(noise)
+                spectra["compton_scale"].append(compton_scale)
+                spectra["SNR"].append(snr)
+
+                if True:
+                    compare_three_spectra(spectrum_keV, spectrum, noisy_spectrum, noise, rn_name, outdir, 
+                                          title1='template', title2=f'noisy ({snr}dB)', title3=f'background + Compton ({compton_scale})', 
+                                          show_plot=True)
 
     spectra["keV"] = spectrum_keV
 
@@ -82,7 +100,7 @@ def main():
     snrs = np.arange(arg.minsnr, arg.maxsnr+arg.snrstep, arg.snrstep)
     compton_scales = np.arange(arg.mincompton, arg.maxcompton+arg.comptonstep, arg.comptonstep)
 
-    params = [(compton, snr) for compton in compton_scales for snr in snrs]
+    params = {'SNR': snrs, 'Compton': compton_scales}
 
     # Generate the dataset with all radionuclides in config file at all Compton/SNRs
     dataset = generate_spectra(config["DETECTORS"][dettype.upper()], nndc_tables, params, outdir)
