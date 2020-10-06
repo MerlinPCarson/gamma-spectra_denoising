@@ -42,7 +42,7 @@ def generate_spectra(config, nndc_tables, params, outdir):
                 spectra["compton_scale"].append(compton_scale)
                 spectra["SNR"].append(snr)
 
-                if True:
+                if False:
                     compare_three_spectra(spectrum_keV, spectrum, noisy_spectrum, noise, rn_name, outdir, 
                                           title1='template', title2=f'noisy ({snr}dB)', title3=f'background + Compton ({compton_scale})', 
                                           show_plot=True)

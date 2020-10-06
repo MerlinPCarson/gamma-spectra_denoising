@@ -229,7 +229,7 @@ def generate_spectrum_SNR(spectrum, spectrum_keV, background, compton, snr):
         background *= noise_scale
 
         nRMS = np.sqrt(np.mean(background**2))
-        print(f"SNR adjusted background: {20*np.log10(sRMS/nRMS):.2f}")
+        #print(f"SNR adjusted background: {20*np.log10(sRMS/nRMS):.2f}")
 
     # combine background and compton as noise source
     noise = background + compton
