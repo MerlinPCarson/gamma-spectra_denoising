@@ -118,18 +118,18 @@ def compare_spectra(keV, spectrum, noisy_spectrum, rn, outdir, title1 = '', titl
 
     plt.close()
 
-def compare_results(keV, spectrum, noisy_spectrum, denoised_spectrum, outdir, fname, show_plot=False):
+def compare_results(keV, spectrum, noisy_spectrum, denoised_spectrum, snr_improve, outdir, fname, show_plot=False):
 
     plt.figure(figsize=(20,10))
     plt.plot(keV, noisy_spectrum, label="Noisy Spectrum", color='green', linestyle='-.')
     plt.plot(keV, spectrum, label="Target Spectrum", color='blue')
-    plt.plot(keV, denoised_spectrum, alpha=0.8, label="Denoised Spectrum", color='red', linestyle='--')
+    plt.plot(keV, denoised_spectrum, alpha=0.8, label=f"Denoised Spectrum ({snr_improve:.2f} dB)", color='red', linestyle='--')
     
     ax = plt.gca()
     ax.set_xlabel('Energy (keV)', fontsize=18, fontweight='bold', fontname='cmtt10')
     ax.set_ylabel('Intensity', fontsize=18, fontweight='bold', fontname='cmtt10')
-    ax.set_xticks(np.arange(keV[0], keV[-1], 50))
-    ax.set_xticks(np.arange(keV[0], keV[-1], 10), minor=True)
+    ax.set_xticks(np.arange(keV[0], keV[-1], 100))
+    ax.set_xticks(np.arange(keV[0], keV[-1], 20), minor=True)
     ax.grid(axis='x', which='major', alpha=0.5)
     ax.grid(axis='x', which='minor', alpha=0.2)
 

@@ -75,15 +75,15 @@ def main():
     parser.add_argument("-bg", "--background", help="background spectrum", default="background/NaI/BG1200s-U.json")
     parser.add_argument("-nndc", "--nndctables", help="location of NNDC tables data",  default="nuclides-nndc")
     parser.add_argument("-sf", "--savefigs", help="saves plots of templates", action="store_true")
-    parser.add_argument("-maxsnr", "--maxsnr", help="maximum noise SNR", default=5.0, type=float)
-    parser.add_argument("-minsnr", "--minsnr", help="minimum noise SNR", default=-5.0, type=float)
+    parser.add_argument("-maxsnr", "--maxsnr", help="maximum noise SNR", default=25.0, type=float)
+    parser.add_argument("-minsnr", "--minsnr", help="minimum noise SNR", default=-25.0, type=float)
     parser.add_argument("-snrstep", "--snrstep", help="SNR step between min and max snr", default=5, type=int)
     parser.add_argument("-maxc", "--maxcompton", help="maximum Compton scale", default=0.5, type=float)
     parser.add_argument("-minc", "--mincompton", help="minimum Compton scale", default=0.0, type=float)
-    parser.add_argument("-cstep", "--comptonstep", help="Compton scale step between min and max Compton", default=.5, type=int)
+    parser.add_argument("-cstep", "--comptonstep", help="Compton scale step between min and max Compton", default=.1, type=int)
     arg = parser.parse_args()
 
-    dettype = arg.dettype
+    dettype = arg.dettype.upper()
     outdir = os.path.join(arg.outdir, dettype) 
 
     # load configuration parameters
@@ -103,7 +103,7 @@ def main():
     params = {'SNR': snrs, 'Compton': compton_scales}
 
     # Generate the dataset with all radionuclides in config file at all Compton/SNRs
-    dataset = generate_spectra(config["DETECTORS"][dettype.upper()], nndc_tables, params, outdir)
+    dataset = generate_spectra(config["DETECTORS"][dettype], nndc_tables, params, outdir)
 
     # save dataset to HDF5 files
     save_dataset(dettype, dataset, outdir)
