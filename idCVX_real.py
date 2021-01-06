@@ -17,7 +17,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-df", "--datafile", help="data file containing dataset", default="data/training.h5")
     parser.add_argument("-dt", "--templatefile", help="data file containing templates", default="data/templates.h5")
-    parser.add_argument("-det", "--dettype", help="detector type", default="HPGe")
+    parser.add_argument("-det", "--dettype", help="detector type", default="NaI")
     parser.add_argument("--norm", type=str,
                   choices=["L1", "L2", "Linf"],
                   default="L1",
@@ -52,7 +52,7 @@ def main():
 
         preds.append(pred)
 
-        print(f"{i}: Pred is {templates['name'][pred]}, Target is {name.decode('utf-8')} ({ampl0[pred]})")
+        print(f"[{i}/{len(dataset['name'])}]: Pred is {templates['name'][pred]}, Target is {name.decode('utf-8')} ({ampl0[pred]})")
 
     preds = np.array([templates['name'][pred] for pred in preds])
     targets = np.array([dataset['name'][i].decode('utf-8') for i in range(len(dataset['name']))])

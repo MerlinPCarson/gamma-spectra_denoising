@@ -37,7 +37,7 @@ def plot_data(dataset):
         plt.plot(dataset["keV"], dataset["noise"][i], label='noise') 
         rn_num, rn_name = split_radionuclide_name(dataset["name"][i].decode('utf-8'))
         rn = "${}^{"+rn_num+"}{"+rn_name+"}$"
-        plt.title(f'{rn} with Compton scale: {dataset["compton_scale"][i]}, noise scale {dataset["noise_scale"][i]}')
+        plt.title(f'{rn} with Compton scale: {dataset["compton_scale"][i]}, SNR {dataset["SNR"][i]}')
         plt.legend()
         plt.show()
 
