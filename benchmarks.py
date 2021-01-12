@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from spectra_utils import plot_data
-from load_data import load_data
+from load_data_real import load_data
 from build_dataset import save_dataset
 from svd_denoise import Denoiser
 from pca_denoise import Denoiser as PCA_Denoiser
