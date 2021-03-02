@@ -15,12 +15,11 @@ def load_spectrum(specfile):
     with open(specfile) as spec:
         spectrum = json.load(spec)
 
-#    return {"keV": spectrum['KEV'], "noisy_spectrum": spectrum['HIT']}
     return spectrum['KEV'], spectrum['HIT']
 
 def load_spectra(spectra):
 
-    test_data = {"keV": [], "hits": []}
+    test_data = {"keV": [], "hits": [], "spec_name": []}
 
     if os.path.isfile(spectra):
         test_files = [spectra]
@@ -33,6 +32,7 @@ def load_spectra(spectra):
         keV, hits = load_spectrum(spectrum)
         test_data["keV"].append(keV)
         test_data["hits"].append(hits)
+        test_data["spec_name"].append(spectrum)
 
     return test_data, test_files
 

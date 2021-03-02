@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import json
 import pickle
 import argparse
 import numpy as np
@@ -28,6 +29,16 @@ def setup_gpus():
     os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(map(str, device_ids))
     return device_ids
 
+def save_spectra(test_data, outdir):
+
+    for hits, f_name in zip(test_data['denoised_spectrum'], test_data['spec_name']):
+        json_data = json.load(open(f_name, 'r'))
+        json_data['HIT'] = hits.tolist()
+        #outfile = os.path.join(outdir, os.path.basename(str(f_name).replace('.json','-denoised.json')))
+        outfile = os.path.join(outdir, os.path.basename(f_name.replace('.json','-denoised.json')))
+        print(f'saving denoised spectra to {outfile}')
+        json.dump(json_data, open(outfile, 'w'), indent=4)
+
 def main():
     start = time.time()
 
@@ -38,8 +49,9 @@ def main():
     parser.add_argument('--model', type=str, default='models/best_model.pt', help='location of model to use')
     parser.add_argument('--outdir', type=str, help='location to save output plots')
     parser.add_argument('--outfile', type=str, help='location to save output data', default='denoised_spectra.h5')
-    parser.add_argument('--saveresults', help='saves output to .h5 file', default=False, action='store_true')
+    parser.add_argument('--saveresults', help='saves output to .h5 and json files', default=False, action='store_true')
     parser.add_argument('--savefigs', help='saves plots of results', default=False, action='store_true')
+    parser.add_argument('--show_plot', help='shows plots of each denoised spectra', default=False, action='store_true')
     args = parser.parse_args()
 
     # if output directory is not provided, save plots to model directory
@@ -129,16 +141,20 @@ def main():
             print(f'[{num+1}/{len(spectra_loader)}] Denoising {infile}')
             if args.savefigs:
                 outfile = infile.replace('.json','')
-                compare_spectra(spectra_keV[num], spectra[0,0,:], denoised_spectra[0,0,:].cpu(), outfile, args.outdir, title1='noisy', title2='denoised') 
+                compare_spectra(spectra_keV[num], spectra[0,0,:], denoised_spectra[0,0,:].cpu(), 
+                        outfile, args.outdir, title1='noisy', title2='denoised', show_plot=args.show_plot)
 
     # save denoised data to file, currently only supports entire dataset
     if args.saveresults:
-        assert len(spectra) == len(denoised), f'{len(spectra)} examples yet {len(denoised)} denoised' 
+        assert len(spectra_loader) == len(denoised), f'{len(spectra)} examples yet {len(denoised)} denoised' 
         denoised = np.squeeze(np.array(denoised))
-        test_data['noisy_spectrum'] = denoised 
+        test_data['denoised_spectrum'] = denoised 
         outfile = os.path.join(args.outdir, args.outfile)
         print(f'Saving denoised spectrum to {outfile}')
-        save_dataset(args.dettype.upper(), test_data, outfile)
+        #save_dataset(args.dettype.upper(), test_data, outfile)
+        #print(len(test_data['noisy_spectrum']))
+        #print(test_files)
+        save_spectra(test_data, args.outdir)
 
     print(f'Script completed in {time.time()-start:.2f} secs')
     return 0
