@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from glob import glob
-from dtraUtil import data_load_normalized
+from spectra_utils import data_load_normalized
 
 
 def compare_denoising(spectra, denoised_spectra):
@@ -16,29 +16,44 @@ def compare_denoising(spectra, denoised_spectra):
         keV, hits = data_load_normalized(raw_spec)
         print(f'loading {spec}')
         keVDN, hitsDN = data_load_normalized(spec)
+        hitsDN = np.clip(hitsDN, a_min=0, a_max=None)
+
 
         # background subtraction
         print(f'loading {raw_spec} background')
         back_keV, back_hits = data_load_normalized(os.path.join(spectra, 'background.json'))
         # don't want negative intensities
-        hits = np.clip(hits-back_hits, a_min=0, a_max=None)  
+        hitsBS = np.clip(hits-back_hits, a_min=0, a_max=None)
 
-        # normalize magnitude
-        hits = np.array(hits)
+        # normalize magnitude of each version of the spectrum
         hits /= (hits ** 2).sum() ** 0.5
-        hitsDN = np.array(hitsDN)
+        hitsBS /= (hitsBS ** 2).sum() ** 0.5
         hitsDN /= (hitsDN ** 2).sum() ** 0.5
 
-        plt.plot(keV, hits, label='raw spectrum')
-        plt.plot(keVDN, hitsDN, label='denoised spectrum', alpha=0.6)
+        # plot comparisons side by side
+        fig, ax = plt.subplots(1,2)
+        ax[0].plot(keV, hits, color='red', label='raw spectrum')
+        ax[0].plot(keV, hitsBS, color='green', label='background subtracted spectrum', alpha=0.6)
+        ax[0].legend()
+        ax[0].set_xlabel('energy (keV)')
+        ax[0].set_ylabel('Intensity')
+        ax[1].plot(keV, hits, color='red', label='raw spectrum')
+        ax[1].plot(keV, hitsDN, color='green', label='DNN denoised spectrum', alpha=0.6)
+        ax[1].set_xlabel('energy (keV)')
+        ax[1].set_ylabel('Intensity')
+        ax[1].legend()
+
+        #plt.xlabel('energy (keV)')
+        #plt.ylabel('Intensity')
         plt.legend()
+        plt.tight_layout()
         plt.show()
 
 def parse_args():
     parser = argparse. ArgumentParser(description='Compare results of denosing and background subtraction')
-    parser.add_argument('--spectra', type=str, default='spectra/NaI/Uranium', help='directory of spectra or spectrum in json format')
-    parser.add_argument('--denoised_spectra', type=str, default='spectra/NaI/Uranium', 
-                        help='directory containing denoised spectra')
+    parser.add_argument('--spectra', type=str, default='../DTRA_SSLCA/psu_dtra/data/NaI-8-21-20/Uranium', help='directory of spectra or spectrum in json format')
+    parser.add_argument('--denoised_spectra', type=str, default='denoised', 
+                        help='directory containing denoised spectra in json format')
     parser.add_argument('--savefigs', help='saves plots of results', default=False, action='store_true')
     args = parser.parse_args()
 
