@@ -10,7 +10,7 @@ from glob import glob
 from spectra_utils import data_load_normalized
 
 
-def compare_denoising(spectra, denoised_spectra, show_figs=True, save_figs=False):
+def compare_denoising(spectra, denoised_spectra, minkev, maxkev, show_figs=True, save_figs=False):
     for spec in glob(os.path.join(denoised_spectra, '*.json')):
         raw_spec = os.path.join(spectra, os.path.basename(spec).replace('-denoised', ''))
         print(f'loading {raw_spec}')
@@ -42,10 +42,12 @@ def compare_denoising(spectra, denoised_spectra, show_figs=True, save_figs=False
         ax[0][0].legend()
         ax[0][0].set_xlabel('energy (keV)')
         ax[0][0].set_ylabel('Intensity')
+        ax[0][0].set_xlim(minkev,maxkev)
         ax[0][1].plot(keV, hits, color='blue', label='raw spectrum', alpha=0.6)
         ax[0][1].plot(keVDN, hitsDN, color='red', label='DNN denoised spectrum', alpha=0.6)
         ax[0][1].set_xlabel('energy (keV)')
         ax[0][1].set_ylabel('Intensity')
+        ax[0][1].set_xlim(minkev,maxkev)
         ax[0][1].legend()
 
         # compare background subtracted with DNN denoised spectrum
@@ -54,11 +56,15 @@ def compare_denoising(spectra, denoised_spectra, show_figs=True, save_figs=False
         ax[1][0].legend()
         ax[1][0].set_xlabel('energy (keV)')
         ax[1][0].set_ylabel('Intensity')
+        ax[1][0].set_xlim(minkev,maxkev)
         ax[1][1].plot(keV, hitsBSNorm, color='green', label='normalized background subtracted spectrum', alpha=0.6)
         ax[1][1].plot(keVDN, hitsDNNorm, color='red', label='normalized DNN denoised spectrum', alpha=0.6)
         ax[1][1].set_xlabel('energy (keV)')
         ax[1][1].set_ylabel('Intensity')
+        ax[1][1].set_xlim(minkev,maxkev)
         ax[1][1].legend()
+
+        fig.canvas.set_window_title(f"{os.path.basename(spec).replace('-denoised.json','')} spectrum")
 
         # make image full screen
         plt.tight_layout()
@@ -88,6 +94,8 @@ def parse_args():
     parser.add_argument('--spectra', type=str, default='../DTRA_SSLCA/psu_dtra/data/NaI-8-21-20/Uranium', help='directory of spectra or spectrum in json format')
     parser.add_argument('--denoised_spectra', type=str, default='denoised', 
                         help='directory containing denoised spectra in json format')
+    parser.add_argument('--minkev', type=int, help='Min keV to plot', default=0)
+    parser.add_argument('--maxkev', type=int, help='Max keV to plot', default=1500)
     parser.add_argument('--savefigs', help='saves plots of comparisons', default=False, action='store_true')
     parser.add_argument('--showfigs', help='show plots of comparisons', default=False, action='store_true')
     parser.add_argument('--map_file', type=str, help='SSLCA map file to convert to denoised spectra')
@@ -103,7 +111,8 @@ def main(args):
 
     # create comparison figures of denoising algorithms
     if args.savefigs or args.showfigs:
-        compare_denoising(args.spectra, args.denoised_spectra, show_figs=args.showfigs, save_figs=args.savefigs)
+        compare_denoising(args.spectra, args.denoised_spectra, args.minkev, args.maxkev, 
+                          show_figs=args.showfigs, save_figs=args.savefigs)
 
     # convert SSLCA map file of spectra to map file of denoised spectra
     if args.map_file:
