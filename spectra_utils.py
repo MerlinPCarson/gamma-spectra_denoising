@@ -15,7 +15,7 @@ if not os.environ.get('DISPLAY', '').strip():
 import matplotlib.pyplot as plt
 
 
-def data_load_normalized(fname):
+def data_load_normalized(fname, normalize=True):
     """Loads the .json file specified and returns (keV, hits), where hits
     has been normalized by the measurement time.
     """
@@ -25,10 +25,11 @@ def data_load_normalized(fname):
         keV = np.arange(len(data['HIT'])) * float(e1) + float(e0)
         hits = np.asarray(data['HIT']).astype(float)
 
-        if 'MEAS_TIM' not in data:
-            log.warn(f"no MEAS_TIME in {fname}")
-        else:
-            hits = hits / float(data['MEAS_TIM'].split(' ')[0])
+        if normalize:
+            if 'MEAS_TIM' not in data:
+                log.warn(f"no MEAS_TIME in {fname}")
+            else:
+                hits = hits / float(data['MEAS_TIM'].split(' ')[0])
     except Exception as e:
         raise ValueError(f'While loading {fname}') from e
 
