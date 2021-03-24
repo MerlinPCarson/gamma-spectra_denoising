@@ -15,6 +15,26 @@ if not os.environ.get('DISPLAY', '').strip():
 import matplotlib.pyplot as plt
 
 
+def data_load_normalized(fname, normalize=True):
+    """Loads the .json file specified and returns (keV, hits), where hits
+    has been normalized by the measurement time.
+    """
+    try:
+        data = json.load(open(fname))
+        e0, e1 = data['ENER_FIT'][0], data['ENER_FIT'][1]
+        keV = np.arange(len(data['HIT'])) * float(e1) + float(e0)
+        hits = np.asarray(data['HIT']).astype(float)
+
+        if normalize:
+            if 'MEAS_TIM' not in data:
+                log.warn(f"no MEAS_TIME in {fname}")
+            else:
+                hits = hits / float(data['MEAS_TIM'].split(' ')[0])
+    except Exception as e:
+        raise ValueError(f'While loading {fname}') from e
+
+    return keV, hits
+
 def load_nndc_tables(nndc_dir, radionuclides):
 
     nndc_tables = {}
@@ -37,7 +57,7 @@ def plot_data(dataset):
         plt.plot(dataset["keV"], dataset["noise"][i], label='noise') 
         rn_num, rn_name = split_radionuclide_name(dataset["name"][i].decode('utf-8'))
         rn = "${}^{"+rn_num+"}{"+rn_name+"}$"
-        plt.title(f'{rn} with Compton scale: {dataset["compton_scale"][i]}, noise scale {dataset["noise_scale"][i]}')
+        plt.title(f'{rn} with Compton scale: {dataset["compton_scale"][i]}, SNR {dataset["SNR"][i]}')
         plt.legend()
         plt.show()
 

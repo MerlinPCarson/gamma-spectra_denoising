@@ -13,7 +13,8 @@ def load_data(datafile, det, show_data=False):
         assert h5f[det]["spectrum"].shape == h5f[det]["noisy_spectrum"].shape, f'Mismatch between training examples and target examples'
         dataset = {"name": h5f[det]["name"][()], "keV": h5f[det]["keV"][()], "spectrum": h5f[det]["spectrum"][()], \
                             "noisy_spectrum": h5f[det]["noisy_spectrum"][()], "noise": h5f[det]["noise"][()], \
-                            "compton_scale": h5f[det]["compton_scale"][()], "noise_scale": h5f[det]["noise_scale"][()]}
+                            "compton_scale": h5f[det]["compton_scale"][()], "SNR": h5f[det]["SNR"][()]}
+                            #"compton_scale": h5f[det]["compton_scale"][()], "noise_scale": h5f[det]["noise_scale"][()]}
     if show_data:
         plot_data(dataset)
 
