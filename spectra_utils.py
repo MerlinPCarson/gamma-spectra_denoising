@@ -15,16 +15,24 @@ if not os.environ.get('DISPLAY', '').strip():
 import matplotlib.pyplot as plt
 
 
-def data_load_normalized(fname, normalize=True):
+def data_load_normalized(fname, normalize=True, recalibrate=False):
     """Loads the .json file specified and returns (keV, hits), where hits
     has been normalized by the measurement time.
     """
     try:
         data = json.load(open(fname))
-        e0, e1 = data['ENER_FIT'][0], data['ENER_FIT'][1]
-        keV = np.arange(len(data['HIT'])) * float(e1) + float(e0)
+
+        # get keV values
+        if recalibrate:
+            e0, e1 = data['ENER_FIT'][0], data['ENER_FIT'][1]
+            keV = np.arange(len(data['HIT'])) * float(e1) + float(e0)
+        else:
+            keV = np.asarray(data['KEV'])
+
+        # get intensity values
         hits = np.asarray(data['HIT']).astype(float)
 
+        # time normalize
         if normalize:
             if 'MEAS_TIM' not in data:
                 log.warn(f"no MEAS_TIME in {fname}")
