@@ -6,9 +6,19 @@ import numpy as np
 import json
 import re
 
+from spectra_utils import split_radionuclide_name
+
+def get_rn_name(spec_file):
+    basename = os.path.basename(spec_file)
+    rn_name = basename.split('_')[0]
+    return split_radionuclide_name(rn_name)
+
 def spec_to_json(A, B, keV, hits, meas_time, out_file):
 
-    jsonData = {'MEAS_TIM': f'{meas_time} {meas_time}', 
+    rn_num, rn_letters = get_rn_name(out_file)
+
+    jsonData = {'RADIONUCLIDE': f'{rn_num}{rn_letters}',
+                'MEAS_TIM': f'{meas_time} {meas_time}', 
                 'ENER_FIT': [str(A), str(B)],
                 'HIT': hits, 'KEV': keV}
 
@@ -20,8 +30,8 @@ def spec_to_json(A, B, keV, hits, meas_time, out_file):
 def main():
     start = time.time()
 
-    #csv_file = sys.argv[1]
-    csv_file = 'data/mcnp_spectra/spectra/1000000counts.csv'
+    csv_file = sys.argv[1]
+    #csv_file = 'data/mcnp_spectra/spectra/1000000counts.csv'
 
     df = pd.read_csv(csv_file)
 
@@ -42,16 +52,16 @@ def main():
     # verifiying calibration and bins line up
     #print(keV[34])
     #print(np.searchsorted(keV, 0.0, side='left'))
-    print(keV[70])
-    print(np.searchsorted(keV, 13.0, side='left'))
+    #print(keV[70])
+    #print(np.searchsorted(keV, 13.0, side='left'))
     #print(keV[124])
     #print(np.searchsorted(keV, 32.194, side='left'))
     #print(keV[1006])
     #print(np.searchsorted(keV, 347.14, side='left'))
     #print(keV[1886])
     #print(np.searchsorted(keV, 661.657, side='left'))
-    print(keV[3318])
-    print(np.searchsorted(keV, 1173.2, side='left'))
+    #print(keV[3318])
+    #print(np.searchsorted(keV, 1173.2, side='left'))
 
     for spectrum in spectra:
         meas_time = re.findall(r'\d*\.?\d+[s]', spectrum)
