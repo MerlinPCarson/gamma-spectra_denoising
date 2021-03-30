@@ -120,7 +120,7 @@ def generate_clean_spectra(rn_table, config, bucket_size, max_keV, spectrum_keV)
 
     return spectrum, peak_intensities
 
-def generate_spectrum_SNR(spectrum, spectrum_keV, background, compton, snr):
+def generate_spectrum_SNR(spectrum, background, compton, snr):
     
     # normalize spectrum vector by its magnitude
     spectrum /= np.sqrt(np.sum(spectrum**2))
@@ -144,7 +144,7 @@ def generate_spectrum_SNR(spectrum, spectrum_keV, background, compton, snr):
         noise_scale = (sRMS+cRMS)/(nRMS*snr_lin)
         background *= noise_scale
 
-        nRMS = np.sqrt(np.mean(background**2))
+        #nRMS = np.sqrt(np.mean(background**2))
         #print(f"SNR adjusted background: {20*np.log10(sRMS/nRMS):.2f}")
 
     # combine background and compton as noise source
@@ -153,9 +153,9 @@ def generate_spectrum_SNR(spectrum, spectrum_keV, background, compton, snr):
     # combine clean spectrum and noise sources
     noise_spec = spectrum + noise 
 
-    return spectrum_keV, spectrum, noise_spec, noise
+    return spectrum, noise_spec, noise
 
-def generate_spectrum(rn_table, config, compton_scale=0.0, min_efiency=50, alpha=0.0035, noise_scale=0.0):
+def generate_spectrum(rn_table, config, compton_scale=0.0, min_efficiency=50, alpha=0.0035, noise_scale=0.0):
 
     # create data structure and stats for spectram
     min_keV = config["ENER_FIT"][0]

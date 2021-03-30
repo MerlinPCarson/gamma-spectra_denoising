@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from spectra_utils import load_nndc_tables
 from spectra_utils import generate_clean_spectra, generate_spectrum_SNR, generate_compton
-from spectra_utils import compare_three_spectra
+from plot_utils import compare_three_spectra
 
 
 def generate_spectra(config, nndc_tables, params, outdir):
@@ -34,7 +34,7 @@ def generate_spectra(config, nndc_tables, params, outdir):
 
             for snr in params['SNR']:
                 # combine clean spectrum, background and Compton to achive desired SNR
-                spectrum_keV, spectrum, noisy_spectrum, noise = generate_spectrum_SNR(rn_spectrum, spectrum_keV, bg_intensities, compton, snr)
+                spectrum_keV, spectrum, noisy_spectrum, noise = generate_spectrum_SNR(rn_spectrum, bg_intensities, compton, snr)
                 spectra["name"].append(rn_name.encode('utf-8'))
                 spectra["spectrum"].append(spectrum)
                 spectra["noisy_spectrum"].append(noisy_spectrum)

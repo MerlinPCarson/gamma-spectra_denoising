@@ -64,14 +64,14 @@ def preproc_spectrum(spec_file, det_config, outdir, pe_keV, compton_dir):
     # seperate compton and photoelectric
     compton_hits, no_compton_hits = split_pe_compton(hits, keV, pe_keV)
     # save simulations without compton
-    save_spec(keV.tolist(), no_compton_hits.tolist(), '-no-compton', spec_file, compton_dir)
+    save_spec(keV.tolist(), no_compton_hits.tolist(), '-nocompton', spec_file, compton_dir)
     # save simulations with only compton
     save_spec(keV.tolist(), compton_hits.tolist(), '-compton-only', spec_file, compton_dir)
 
     # broaden peaks without compton
     broad_hits = broaden_lines(keV, no_compton_hits, det_config)
     # save broadened peaks with without compton
-    save_spec(keV.tolist(), broad_hits.tolist(), '-no-compton', spec_file, outdir)
+    save_spec(keV.tolist(), broad_hits.tolist(), '-nocompton', spec_file, outdir)
 
     # broaden peaks without compton
     broad_hits = broaden_lines(keV, compton_hits, det_config)

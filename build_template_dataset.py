@@ -7,7 +7,7 @@ import argparse
 import numpy as np
 from tqdm import tqdm
 
-from spectra_utils import load_radionuclide_nndc, generate_spectrum, compare_spectra
+from spectra_utils import load_radionuclide_nndc, generate_spectrum, compare_2_spectra
 
 
 def load_nndc_tables(nndc_dir, radionuclides):
@@ -34,7 +34,7 @@ def generate_spectra(config, nndc_tables, outdir, savefigs, params):
             spectra["compton_scale"].append(compton_scale)
             spectra["noise_scale"].append(noise_scale)
             if savefigs:
-                compare_spectra(spectrum_keV, spectrum, noise, rn_name, outdir, show_plot=False)
+                compare_2_spectra(spectrum_keV, spectrum, noise, rn_name, outdir, show_plot=False)
 
     spectra["keV"] = spectrum_keV
 
@@ -60,9 +60,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-cf", "--configfile", help="configuration file for generating data", default="config_data.json")
     parser.add_argument("-out", "--outfile", help="output file for data", default="data/training.h5")
-    #parser.add_argument("-det", "--dettype", help="detector type", default="HPGe,NaI,CZT")
-    parser.add_argument("-det", "--dettype", help="detector type", default="HPGe")
+    parser.add_argument("-det", "--dettype", help="detector type", default="NaI")
     parser.add_argument("-nndc", "--nndctables", help="location of NNDC tables data",  default="nuclides-nndc")
+    parser.add_argument("-mcnp", "--mcnp_spectra", help="location of mcnp_simulated spectra",  default="data/mcnp_spectra/preproc_spectra")
     parser.add_argument("-sf", "--savefigs", help="saves plots of templates", action="store_true")
     parser.add_argument("-maxn", "--maxnoise", help="maximum noise scale", default=1.0, type=float)
     parser.add_argument("-minn", "--minnoise", help="minimum noise scale", default=0.1, type=float)
