@@ -47,10 +47,6 @@ def split_pe_compton(hits, keV, rn_pe):
 
     return hits_compton, hits_pe
 
-#def remove_compton(hits, compton_threshold=0.01):
-#    hits[hits < compton_threshold] = 0
-#    return hits
-
 def preproc_spectrum(spec_file, det_config, outdir, pe_keV, compton_dir):
 
     # load peak data time normalized 
