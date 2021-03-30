@@ -58,8 +58,6 @@ def split_radionuclide_name(rn_name):
     num_letter = re.compile("([0-9]+)([a-zA-Z]+)") 
     return num_letter.match(rn_name).groups() 
 
-
-
 def load_radionuclide_nndc(root, rn):
 
     rn_num, rn_name = split_radionuclide_name(rn)
