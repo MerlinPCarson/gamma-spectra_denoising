@@ -28,18 +28,25 @@ def setup_gpus():
     os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(map(str, device_ids))
     return device_ids
 
-# function to remove weight decay from output layer
-def weight_decay(model, final_layer='model.56.weight'):
-    #print('Disabling weight decay for PReLU activation layers, batch normalization layers, and final output layer')
+# function to remove weight decay from output layer and batchnorm layers
+def weight_decay(model):
+
+    batchnorm_layers = []
+    for name, module in model.named_modules():
+        if isinstance(module, torch.nn.BatchNorm1d):
+            batchnorm_layers.append(name.split('.')[-1])
+
     params = []
     for name, param in model.named_parameters():
-        #print(name)
-        #if final_layer in name or 'classifier.0' in name or 'classifier.2' in name or 'norm' in name:
-        if final_layer in name:# or 'norm' in name:
+        # set all batchnorm layers L2 regularization to 0
+        if name.split('.')[1] in batchnorm_layers:
             print(f'setting weight decay to 0 for layer {name}')
             params.append({'params': param, 'weight_decay': 0.0})
         else:
             params.append({'params': param})
+
+    # set final layer L2 regularization to 0
+    params[-1]['weight_decay'] = 0.0 
 
     return params
 
@@ -56,7 +63,6 @@ def main():
     parser.add_argument("-gn", "--gennoise", help="use noise as target", default=False, action="store_true")
     parser.add_argument('--det_type', type=str, default='NaI', help='detector type to train {HPGe, NaI, CZT}')
     parser.add_argument('--train_set', type=str, default='data/NAI/training.h5', help='h5 file with training vectors')
-#    parser.add_argument('--val_set', type=str, default='val.h5', help='h5 file with validation vectors')
     parser.add_argument('--batch_size', type=int, default=64, help='batch size for training')
     parser.add_argument('--epochs', type=int, default=1000, help='number of epochs')
     parser.add_argument('--patience', type=int, default=10, help='number of epochs of no improvment before early stopping')
@@ -76,7 +82,6 @@ def main():
 
     # make sure data files exist
     assert os.path.exists(args.train_set), f'Cannot find training vectors file {args.train_set}'
-#    assert os.path.exists(args.val_set), f'Cannot find validation vectors file {args.val_set}'
 
     # make sure output dirs exists
     os.makedirs(args.log_dir, exist_ok=True)
@@ -97,7 +102,7 @@ def main():
     # if target is noise
     if args.gennoise:
         noise = training_data['noise']
-        #assert noisy_spectra.shape == noise.shape, 'Mismatch between shapes of training and target data'
+        assert noisy_spectra.shape == noise.shape, 'Mismatch between shapes of training and target data'
         # add noise to target data since noise will be the target not the clean spectra, still need clean data for PSNR
         target_spectra = np.stack((target_spectra,noise), axis=1)
     else:
@@ -120,7 +125,7 @@ def main():
 
     # apply standardization parameters to training and validation sets
     x_train = (x_train-train_mean)/train_std
-    #x_val = (x_val-train_mean)/train_std
+    x_val = (x_val-train_mean)/train_std
 
     # input shape for each example to network, NOTE: channels first
     num_channels, num_features = 1, x_train.shape[2]
@@ -157,7 +162,7 @@ def main():
     #criterion = torch.nn.SmoothL1Loss().cuda()
     #optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     params = model.parameters()
-    #params = weight_decay(model)
+    params = weight_decay(model)
     optimizer = torch.optim.AdamW(params, lr=args.lr, betas=(.9, .999), eps=1e-8, weight_decay=args.l2, amsgrad=False)
 
     # data struct to track training and validation losses per epoch
@@ -174,7 +179,7 @@ def main():
 
 #    writer = SummaryWriter(args.log_dir)
 
-#    # schedulers
+    # schedulers
     scheduler = ReduceLROnPlateau(optimizer, 'max', verbose=True, patience=args.patience//2)
 #    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.lr_decay)
 
