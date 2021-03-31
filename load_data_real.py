@@ -8,7 +8,8 @@ import numpy as np
 from glob import glob
 from skimage.metrics import peak_signal_noise_ratio as psnr
 
-from spectra_utils import split_radionuclide_name, plot_data
+from spectra_utils import split_radionuclide_name
+from plot_utils import plot_data
 
 
 def load_spectrum(specfile):

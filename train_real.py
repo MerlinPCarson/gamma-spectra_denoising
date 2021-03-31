@@ -28,6 +28,21 @@ def setup_gpus():
     os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(map(str, device_ids))
     return device_ids
 
+# function to remove weight decay from output layer
+def weight_decay(model, final_layer='model.56.weight'):
+    #print('Disabling weight decay for PReLU activation layers, batch normalization layers, and final output layer')
+    params = []
+    for name, param in model.named_parameters():
+        #print(name)
+        #if final_layer in name or 'classifier.0' in name or 'classifier.2' in name or 'norm' in name:
+        if final_layer in name:# or 'norm' in name:
+            print(f'setting weight decay to 0 for layer {name}')
+            params.append({'params': param, 'weight_decay': 0.0})
+        else:
+            params.append({'params': param})
+
+    return params
+
 def psnr_of_batch(clean_imgs, denoised_imgs):
     batch_psnr = 0
     for i in range(clean_imgs.shape[0]):
@@ -44,11 +59,12 @@ def main():
 #    parser.add_argument('--val_set', type=str, default='val.h5', help='h5 file with validation vectors')
     parser.add_argument('--batch_size', type=int, default=64, help='batch size for training')
     parser.add_argument('--epochs', type=int, default=1000, help='number of epochs')
-    parser.add_argument('--patience', type=int, default=20, help='number of epochs of no improvment before early stopping')
-    parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
+    parser.add_argument('--patience', type=int, default=10, help='number of epochs of no improvment before early stopping')
+    parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
+    parser.add_argument('--l2', type=float, default=1e-5, help='L2 coefficient')
 #    parser.add_argument('--lr_decay', type=float, default=0.94, help='learning rate decay factor')
-    parser.add_argument('--num_layers', type=int, default=20, help='number of CNN layers in network')
-    parser.add_argument('--num_filters', type=int, default=64, help='number of filters per CNN layer')
+    parser.add_argument('--num_layers', type=int, default=5, help='number of CNN layers in network')
+    parser.add_argument('--num_filters', type=int, default=16, help='number of filters per CNN layer')
     parser.add_argument('--filter_size', type=int, default=3, help='size of filter for CNN layers')
     parser.add_argument('--stride', type=int, default=1, help='filter stride for CNN layers')
     parser.add_argument('--res', default=False, help='use model with residual blocks', action='store_true')
@@ -132,10 +148,17 @@ def main():
     # prepare model for data parallelism (use multiple GPUs)
     model = torch.nn.DataParallel(model, device_ids=device_ids).cuda()
     print(model)
+    print(f'number of parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}')
 
     # setup loss and optimizer
     criterion = torch.nn.MSELoss(reduction='sum').cuda()
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    #criterion = torch.nn.MSELoss().cuda()
+    #criterion = torch.nn.L1Loss().cuda()
+    #criterion = torch.nn.SmoothL1Loss().cuda()
+    #optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    params = model.parameters()
+    #params = weight_decay(model)
+    optimizer = torch.optim.AdamW(params, lr=args.lr, betas=(.9, .999), eps=1e-8, weight_decay=args.l2, amsgrad=False)
 
     # data struct to track training and validation losses per epoch
     model_params = {'model_name': 'DnCNN-res' if args.res else 'DnCNN', \
