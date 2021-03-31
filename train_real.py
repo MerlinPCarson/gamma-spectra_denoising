@@ -30,7 +30,7 @@ def setup_gpus():
 
 # function to remove weight decay from output layer and batchnorm layers
 def weight_decay(model):
-
+    
     batchnorm_layers = []
     for name, module in model.named_modules():
         if isinstance(module, torch.nn.BatchNorm1d):
@@ -39,7 +39,7 @@ def weight_decay(model):
     params = []
     for name, param in model.named_parameters():
         # set all batchnorm layers L2 regularization to 0
-        if name.split('.')[1] in batchnorm_layers:
+        if name.split('.')[-2] in batchnorm_layers:
             print(f'setting weight decay to 0 for layer {name}')
             params.append({'params': param, 'weight_decay': 0.0})
         else:
@@ -125,7 +125,7 @@ def main():
 
     # apply standardization parameters to training and validation sets
     x_train = (x_train-train_mean)/train_std
-    x_val = (x_val-train_mean)/train_std
+    #x_val = (x_val-train_mean)/train_std
 
     # input shape for each example to network, NOTE: channels first
     num_channels, num_features = 1, x_train.shape[2]
@@ -284,7 +284,7 @@ def main():
             #best_val_loss = epoch_val_loss
             best_psnr = epoch_psnr
             epochs_since_improvement = 0
-            torch.save(model.state_dict(), os.path.join(args.model_dir, 'best_model.pt'))
+            torch.save(model.module.state_dict(), os.path.join(args.model_dir, 'best_model.pt'))
             pickle.dump(history, open(os.path.join(args.model_dir, 'best_model.npy'), 'wb'))
         else:
             epochs_since_improvement += 1
