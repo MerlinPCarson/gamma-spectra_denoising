@@ -22,7 +22,6 @@ from model import DnCNN, DnCNN_Res
 from train_real import setup_device
 
 from sklearn.model_selection import train_test_split
-from tqdm import tqdm
 from skimage.metrics import peak_signal_noise_ratio as psnr
 
         
@@ -33,7 +32,7 @@ def psnr_of_batch(clean_imgs, denoised_imgs):
     return batch_psnr/clean_imgs.shape[0]
 
 def parse_args():
-    parser = argparse. ArgumentParser(description='Gamma-Spectra Denoising Trainer')
+    parser = argparse. ArgumentParser(description='Gamma-Spectra Denoising testing dataset')
     parser.add_argument('--dettype', type=str, default='NaI', help='detector type to train {HPGe, NaI, CZT}')
     parser.add_argument('--test_set', type=str, default='data/NAI/training.h5', help='h5 file with training vectors')
     parser.add_argument('--all', default=False, help='denoise all examples in test_set file', action='store_true')
@@ -119,8 +118,7 @@ def main(args):
     print(f'Loading weights for {params["model_name"]} model from {args.model} for {params["model_type"]}')
     model.load_state_dict(torch.load(args.model, map_location=torch.device(args.device)))
 
-    # Main training loop
-
+    # Start Denoising
     print(f'Denoising spectra')
     model.eval() 
     total_psnr_noisy = 0
