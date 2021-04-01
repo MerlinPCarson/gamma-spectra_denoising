@@ -29,7 +29,8 @@ def compare_spectra(keV, spectra, titles, min_keV=0, max_keV=1500, outfile=None,
     if savefigs and outfile:
         plt.savefig(outfile)
 
-    plt.show()
+    if showfigs:
+        plt.show()
 
     plt.close()
 

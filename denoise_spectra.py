@@ -38,9 +38,9 @@ def parse_args():
     parser.add_argument('--model', type=str, default='models/best_model.pt', help='location of model to use')
     parser.add_argument('--outdir', type=str, help='location to save output plots')
     parser.add_argument('--outfile', type=str, help='location to save output data', default='denoised_spectra.h5')
-    parser.add_argument('--saveresults', help='saves output to .h5 and json files', default=False, action='store_true')
+    parser.add_argument('--saveresults', help='saves output to .h5 and json files', default=True, action='store_true')
     parser.add_argument('--savefigs', help='saves plots of each denoised spectra', default=True, action='store_true')
-    parser.add_argument('--showfigs', help='shows plots of each denoised spectra', default=True, action='store_true')
+    parser.add_argument('--showfigs', help='shows plots of each denoised spectra', default=False, action='store_true')
     args = parser.parse_args()
 
     return args
