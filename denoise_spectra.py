@@ -88,10 +88,10 @@ def main(args):
     # create and load model
     if params['model_name'] == 'DnCNN':
         model = DnCNN(num_channels=params['num_channels'], num_layers=params['num_layers'],
-                      kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']) 
+                      kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']).to(args.device)
     elif params['model_name'] == 'DnCNN-res':
         model = DnCNN_Res(num_channels=params['num_channels'], num_layers=params['num_layers'],
-                      kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']) 
+                      kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']).to(args.device)
     else:
         print(f'Model name {params["model_name"]} is not supported.')
         return 1
@@ -115,23 +115,25 @@ def main(args):
 
             # make predictions
             preds = model((noisy_spectra-train_mean)/train_std)
+            preds = preds.cpu().numpy().astype(np.float32)
 
             # save denoised spectrum
             if params['model_type'] == 'Gen-spectrum':
-                denoised_spectra = preds
+                denoised_spectrum = preds
             else:
-                denoised_spectra = noisy_spectra-preds 
+                denoised_spectrum = noisy_spectra-preds 
 
-            denoised_spectra *= norm_factor
+            denoised_spectrum = np.clip(denoised_spectrum, 0.0, None)
+            denoised_spectrum *= norm_factor.numpy()
 
             # add batch of denoised spectra to list of denoised spectra
-            denoised.extend(denoised_spectra.tolist()) 
+            denoised.extend(denoised_spectrum.tolist()) 
 
             infile = os.path.basename(test_files[num])
             print(f'[{num+1}/{len(spectra_loader)}] Denoising {infile}')
             if args.savefigs:
                 outfile = os.path.join(args.outdir, infile.replace('.json',''))
-                compare_spectra(spectra_keV[num], [spectra[0,0,:], denoised_spectra[0,0,:].cpu()], 
+                compare_spectra(spectra_keV[num], [spectra[0,0,:], denoised_spectrum[0,0,:]], 
                                [spectra_name[num], 'DNN denoised'], outfile=outfile,
                                 savefigs=args.savefigs, showfigs=args.showfigs)
 

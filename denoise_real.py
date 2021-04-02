@@ -106,10 +106,10 @@ def main(args):
     # create and load model
     if params['model_name'] == 'DnCNN':
         model = DnCNN(num_channels=params['num_channels'], num_layers=params['num_layers'], 
-                      kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']) 
+                      kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']).to(args.device)
     elif params['model_name'] == 'DnCNN-res':
         model = DnCNN_Res(num_channels=params['num_channels'], num_layers=params['num_layers'], 
-                      kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']) 
+                      kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']).to(args.device)
     else:
         print(f'Model name {params["model_name"]} is not supported.')
         return 1
@@ -148,6 +148,7 @@ def main(args):
                 denoised_spectrum = noisy_spectra-preds 
 
             # add batch of denoised spectra to list of denoised spectra
+            denoised_spectrum = np.clip(denoised_spectrum, 0.0, None)
             denoised.extend(denoised_spectrum.tolist()) 
 
             psnr_denoised = psnr_of_batch(clean_spectra, denoised_spectrum)
@@ -157,7 +158,7 @@ def main(args):
             if args.savefigs:
                 psnr_noisy = psnr_of_batch(clean_spectra[0], noisy_spectra[0])
                 psnr_denoised = psnr_of_batch(clean_spectra[0], denoised_spectrum[0])
-                compare_results(spectra_keV, clean_spectra[0,0,:], noisy_spectra[0,0,:],  preds[0,0,:], 
+                compare_results(spectra_keV, clean_spectra[0,0,:], noisy_spectra[0,0,:], denoised_spectrum[0,0,:],
                                 psnr_denoised-psnr_noisy, args.outdir, str(num))
 
     # save denoised data to file, currently only supports entire dataset

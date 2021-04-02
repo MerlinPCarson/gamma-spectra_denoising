@@ -21,19 +21,16 @@ class DnCNN(nn.Module):
         # create module list
         self.layers = []
         self.layers.append(nn.Conv1d(in_channels=num_channels, out_channels=num_filters, kernel_size=kernel_size, padding=padding, bias=False))
-        self.layers.append(nn.ReLU(inplace=True))
+        self.layers.append(nn.LeakyReLU())
         for i in range(num_layers-2):
             self.layers.append(nn.Conv1d(in_channels=num_filters, out_channels=num_filters, kernel_size=kernel_size, padding=padding, bias=False))
             self.layers.append(nn.BatchNorm1d(num_filters))
-            self.layers.append(nn.ReLU(inplace=True))
+            self.layers.append(nn.LeakyReLU())
         self.layers.append(nn.Conv1d(in_channels=num_filters, out_channels=num_channels, kernel_size=kernel_size, padding=padding, bias=False))
         self.model = nn.ModuleList(self.layers)
         init_weights(self.model)
-        # create sequential model
-        #self.model = nn.Sequential(*self.layers)
 
     def forward(self, x):
-        #preds = self.model(x)
         for layer in self.model:
             x = layer(x)
         return x 
@@ -44,22 +41,18 @@ class DnCNN_Res(nn.Module):
         super(DnCNN_Res, self).__init__()
 
         padding = int((kernel_size-1)/2)
-        #print(f'Calculated padding needed to maintain image size: {padding}')
 
         # create module list
         self.layers = []
         self.layers.append(nn.Conv1d(in_channels=num_channels, out_channels=num_filters, kernel_size=kernel_size, padding=padding, bias=False))
-        self.layers.append(nn.ReLU(inplace=True))
+        self.layers.append(nn.LeakyReLU())
         for i in range((num_layers-2)//2):
             self.layers.append(ResBlock( num_filters, kernel_size, padding))
         self.layers.append(nn.Conv1d(in_channels=num_filters, out_channels=num_channels, kernel_size=kernel_size, padding=padding, bias=False))
         self.model = nn.ModuleList(self.layers)
         init_weights(self.model)
-        # create sequential model
-        #self.model = nn.Sequential(*self.layers)
                 
     def forward(self, x):
-        #preds = self.model(x)
         for layer in self.model:
             x = layer(x)
         return x 
@@ -71,7 +64,7 @@ class ResBlock(nn.Module):
         self.layers = []
         self.layers.append(nn.Conv1d(in_channels=num_filters, out_channels=num_filters, kernel_size=kernel_size, padding=padding, bias=False))
         self.layers.append(nn.BatchNorm1d(num_filters))
-        self.layers.append(nn.ReLU(inplace=True))
+        self.layers.append(nn.LeakyReLU())
         self.layers.append(nn.Conv1d(in_channels=num_filters, out_channels=num_filters, kernel_size=kernel_size, padding=padding, bias=False))
         self.layers.append(nn.BatchNorm1d(num_filters))
         self.model = nn.ModuleList(self.layers)
@@ -81,4 +74,4 @@ class ResBlock(nn.Module):
         identity = x
         for layer in self.model:
             x = layer(x)
-        return nn.ReLU(inplace=True)(identity+x)
+        return nn.LeakyReLU()(identity+x)
