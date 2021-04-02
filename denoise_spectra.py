@@ -16,43 +16,41 @@ from torch.utils.data import DataLoader, TensorDataset
 from torch.autograd import Variable
 
 from load_data_real import load_spectra
-from build_dataset import save_dataset
-from spectra_utils import compare_spectra
+from plot_utils import compare_spectra
 from model import DnCNN, DnCNN_Res
+from train_real import setup_device
 
-from tqdm import tqdm
-
-        
-def setup_gpus():
-    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    device_ids = [i for i in range(torch.cuda.device_count())]
-    os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(map(str, device_ids))
-    return device_ids
 
 def save_spectra(test_data, outdir):
 
     for hits, f_name in zip(test_data['denoised_spectrum'], test_data['spec_name']):
         json_data = json.load(open(f_name, 'r'))
         json_data['HIT'] = hits.tolist()
-        #outfile = os.path.join(outdir, os.path.basename(str(f_name).replace('.json','-denoised.json')))
         outfile = os.path.join(outdir, os.path.basename(f_name.replace('.json','-denoised.json')))
         print(f'saving denoised spectra to {outfile}')
         json.dump(json_data, open(outfile, 'w'), indent=4)
 
-def main():
-    start = time.time()
-
-    parser = argparse. ArgumentParser(description='Gamma-Spectra Denoising Trainer')
+def parse_args():
+    parser = argparse. ArgumentParser(description='Gamma-Spectra Denoising')
     parser.add_argument('--dettype', type=str, default='NaI', help='detector type to train {HPGe, NaI, CZT}')
     parser.add_argument('--spectra', type=str, default='spectra/NaI/Uranium', help='directory of spectra or spectrum in json format')
     parser.add_argument('--batch_size', type=int, default=1, help='batch size for denoising')
     parser.add_argument('--model', type=str, default='models/best_model.pt', help='location of model to use')
     parser.add_argument('--outdir', type=str, help='location to save output plots')
     parser.add_argument('--outfile', type=str, help='location to save output data', default='denoised_spectra.h5')
-    parser.add_argument('--saveresults', help='saves output to .h5 and json files', default=False, action='store_true')
-    parser.add_argument('--savefigs', help='saves plots of results', default=False, action='store_true')
-    parser.add_argument('--show_plot', help='shows plots of each denoised spectra', default=False, action='store_true')
+    parser.add_argument('--saveresults', help='saves output to .h5 and json files', default=True, action='store_true')
+    parser.add_argument('--savefigs', help='saves plots of each denoised spectra', default=True, action='store_true')
+    parser.add_argument('--showfigs', help='shows plots of each denoised spectra', default=False, action='store_true')
     args = parser.parse_args()
+
+    return args
+
+
+def main(args):
+    start = time.time()
+
+    # detect gpus/cpu and setup environment variables
+    setup_device(args)
 
     # if output directory is not provided, save plots to model directory
     if not args.outdir:
@@ -64,23 +62,19 @@ def main():
     # make sure data files exist
     assert os.path.exists(args.spectra), f'Cannot find testset spectrum files: {args.spectra}'
 
-    # detect gpus and setup environment variables
-    device_ids = setup_gpus()
-    print(f'Cuda devices found: {[torch.cuda.get_device_name(i) for i in device_ids]}')
-
     print('Loading spectra to denoise')
     test_data, test_files = load_spectra(args.spectra)
 
     spectra = np.expand_dims(np.array(test_data['hits']), axis=1)
     spectra_keV = np.array(test_data['keV'])
+    spectra_name = [os.path.basename(test_data['spec_name'][i]).replace('.json', '') for i in range(len(test_data['spec_name']))]
 
-    #spectra = np.expand_dims(spectra, axis=1)
-    #spectra = np.reshape(spectra, (1,1,-1))
     print(spectra.shape)
 
     # load parameters for model
     params = pickle.load(open(args.model.replace('.pt','.npy'),'rb'))['model']
 
+    # load training set statistics
     train_mean = params['train_mean'] 
     train_std = params['train_std'] 
 
@@ -93,24 +87,20 @@ def main():
 
     # create and load model
     if params['model_name'] == 'DnCNN':
-        model = DnCNN(num_channels=params['num_channels'], num_layers=params['num_layers'], \
+        model = DnCNN(num_channels=params['num_channels'], num_layers=params['num_layers'],
                       kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']) 
     elif params['model_name'] == 'DnCNN-res':
-        model = DnCNN_Res(num_channels=params['num_channels'], num_layers=params['num_layers'], \
+        model = DnCNN_Res(num_channels=params['num_channels'], num_layers=params['num_layers'],
                       kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']) 
     else:
         print(f'Model name {params["model_name"]} is not supported.')
         return 1
 
-    # prepare model for data parallelism (use multiple GPUs)
-    model = torch.nn.DataParallel(model, device_ids=device_ids).cuda()
-
     # loaded saved model
     print(f'Loading weights for {params["model_name"]} model from {args.model} for {params["model_type"]}')
-    model.load_state_dict(torch.load(args.model))
+    model.load_state_dict(torch.load(args.model, map_location=torch.device(args.device)))
 
-    # Main training loop
-
+    # Start denoising 
     print(f'Denoising spectra')
     model.eval() 
 
@@ -120,8 +110,8 @@ def main():
 
             norm_factor = np.sqrt((spectra**2).sum()).float()
 
-            # move batch to GPU
-            noisy_spectra = Variable((spectra/norm_factor).cuda())
+            # move batch to GPU or CPU
+            noisy_spectra = Variable((spectra/norm_factor).to(args.device))
 
             # make predictions
             preds = model((noisy_spectra-train_mean)/train_std)
@@ -140,9 +130,10 @@ def main():
             infile = os.path.basename(test_files[num])
             print(f'[{num+1}/{len(spectra_loader)}] Denoising {infile}')
             if args.savefigs:
-                outfile = infile.replace('.json','')
-                compare_spectra(spectra_keV[num], spectra[0,0,:], denoised_spectra[0,0,:].cpu(), 
-                        outfile, args.outdir, title1='noisy', title2='denoised', show_plot=args.show_plot)
+                outfile = os.path.join(args.outdir, infile.replace('.json',''))
+                compare_spectra(spectra_keV[num], [spectra[0,0,:], denoised_spectra[0,0,:].cpu()], 
+                               [spectra_name[num], 'DNN denoised'], outfile=outfile,
+                                savefigs=args.savefigs, showfigs=args.showfigs)
 
     # save denoised data to file, currently only supports entire dataset
     if args.saveresults:
@@ -152,13 +143,12 @@ def main():
         outfile = os.path.join(args.outdir, args.outfile)
         print(f'Saving denoised spectrum to {outfile}')
         #save_dataset(args.dettype.upper(), test_data, outfile)
-        #print(len(test_data['noisy_spectrum']))
-        #print(test_files)
         save_spectra(test_data, args.outdir)
 
     print(f'Script completed in {time.time()-start:.2f} secs')
     return 0
 
 if __name__ == '__main__':
-    sys.exit(main())
+    args = parse_args()
+    sys.exit(main(args))
 

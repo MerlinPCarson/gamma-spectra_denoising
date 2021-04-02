@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from spectra_utils import split_radionuclide_name
 
 
-def compare_spectra(keV, spectra, titles, min_keV=0, max_keV=1500):
+def compare_spectra(keV, spectra, titles, min_keV=0, max_keV=1500, outfile=None, savefigs=False, showfigs=True):
 
     min_idx = np.searchsorted(keV, min_keV, side='left')
     max_idx = np.searchsorted(keV, max_keV, side='left')
@@ -26,7 +26,11 @@ def compare_spectra(keV, spectra, titles, min_keV=0, max_keV=1500):
     plt.legend(fancybox=True, shadow=True, fontsize=11)
     plt.tight_layout()
 
-    plt.show()
+    if savefigs and outfile:
+        plt.savefig(outfile)
+
+    if showfigs:
+        plt.show()
 
     plt.close()
 
