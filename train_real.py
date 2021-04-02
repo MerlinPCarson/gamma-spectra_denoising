@@ -116,10 +116,10 @@ def build_model(args):
     # create model
     if not args.res:
         model = DnCNN(num_channels=args.num_channels, num_layers=args.num_layers, 
-                      kernel_size=args.filter_size, stride=args.stride, num_filters=args.num_filters) 
+                      kernel_size=args.filter_size, stride=args.stride, num_filters=args.num_filters).to(args.device) 
     else:
         model = DnCNN_Res(num_channels=args.num_channels, num_layers=args.num_layers, 
-                      kernel_size=args.filter_size, stride=args.stride, num_filters=args.num_filters) 
+                      kernel_size=args.filter_size, stride=args.stride, num_filters=args.num_filters).to(args.device)
     
     # if more than 1 GPU, prepare model for data parallelism (use multiple GPUs)
     if len(args.device_ids) > 1:
@@ -128,7 +128,7 @@ def build_model(args):
     # setup loss and optimizer
     criterion = torch.nn.MSELoss(reduction='sum').to(args.device)
     params = model.parameters()
-    params = weight_decay(model)
+    #params = weight_decay(model)
     optimizer = torch.optim.AdamW(params, lr=args.lr, betas=(.9, .999), eps=1e-8, weight_decay=args.l2, amsgrad=False)
 
     return model, criterion, optimizer
