@@ -1,12 +1,19 @@
 import os
 import sys
 import time
-import h5py
+import random
 import pickle
 import argparse
 import numpy as np
 
 import torch
+# makes cuDNN deterministic
+torch.backends.cudnn.benchmark = False
+try:    # PyTorch 1.8
+    torch.use_deterministic_algorithms(True)
+except: # PyTorch 1.7
+    torch.set_deterministic(True)
+
 from torch.utils.data import DataLoader, TensorDataset
 from torch.autograd import Variable
 from torch.optim.lr_scheduler import ReduceLROnPlateau
@@ -55,6 +62,12 @@ def weight_decay(model):
     params[-1]['weight_decay'] = 0.0 
 
     return params
+
+def l1_cost(model):
+    cost = 0.0
+    for param in model.parameters():
+        cost += torch.sum(param.abs())
+    return cost
 
 def psnr_of_batch(clean_imgs, denoised_imgs):
     batch_psnr = 0
@@ -107,8 +120,10 @@ def create_data_loaders(args):
     print(f'Number of validation examples: {len(x_val)}')
 
     # create batched data loaders for model
-    train_loader = DataLoader(dataset=train_dataset, num_workers=os.cpu_count(), batch_size=args.batch_size, shuffle=True)
-    val_loader = DataLoader(dataset=val_dataset, num_workers=os.cpu_count(), batch_size=args.batch_size, shuffle=False)
+    train_loader = DataLoader(dataset=train_dataset, num_workers=os.cpu_count(), 
+                              batch_size=args.batch_size, shuffle=True)
+    val_loader = DataLoader(dataset=val_dataset, num_workers=os.cpu_count(), 
+                              batch_size=args.batch_size, shuffle=False)
 
     return train_loader, val_loader
 
@@ -150,18 +165,18 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
     pickle.dump(history, open(os.path.join(args.model_dir, 'model.npy'), 'wb'))
 
     # schedulers
-    scheduler = ReduceLROnPlateau(optimizer, 'max', verbose=True, patience=args.patience//2)
+    scheduler = ReduceLROnPlateau(optimizer, 'min', verbose=True, patience=args.patience//2)
     #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.lr_decay)
-
 
     # intializiang best values for regularization via early stopping 
     best_val_loss = 99999
     best_psnr = 0
+    best_epoch = 0
     epochs_since_improvement = 0
 
     # Main training loop
-    for epoch in range(args.epochs):
-        print(f'Starting epoch {epoch+1}/{args.epochs} with learning rate {optimizer.param_groups[0]["lr"]}')
+    for epoch in range(1, args.epochs+1):
+        print(f'Starting epoch {epoch}/{args.epochs} with learning rate {optimizer.param_groups[0]["lr"]}')
 
         model.train()
         epoch_train_loss = 0
@@ -181,7 +196,7 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
             preds = model(noisy_spectra)
 
             # calculate loss
-            loss = criterion(preds, target)/(2*len(noisy_spectra))
+            loss = criterion(preds, target)/(2*len(noisy_spectra)) + args.l1 * l1_cost(model)
             epoch_train_loss += loss.item()
 
             # backprop
@@ -211,13 +226,13 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
                 preds = model(x_val)
 
                 # calculate loss
-                val_loss = criterion(preds, target)/(2*len(noisy_spectra))
+                val_loss = criterion(preds, target)/(2*len(noisy_spectra)) + args.l1 * l1_cost(model)
                 epoch_val_loss += val_loss.item()
 
                 # calculate PSNR 
                 if not args.gennoise:
                     epoch_psnr += psnr_of_batch(target.cpu().numpy().astype(np.float32), 
-                                                preds.cpu().numpy().astype(np.float32))
+                                                np.clip(preds.cpu().numpy().astype(np.float32),0,None))
                 else:
                     denoised = noisy_spectra - preds.cpu()    # subtract predicted noise from noisy spectra
                     epoch_psnr += psnr_of_batch(target_data[:,0:1,:].numpy().astype(np.float32), 
@@ -229,8 +244,8 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
         epoch_psnr /= len(val_loader)
 
         # reduce learning rate if validation has leveled off
-        #scheduler.step(epoch_val_loss)
-        scheduler.step(epoch_psnr)
+        scheduler.step(epoch_val_loss)
+        #scheduler.step(epoch_psnr)
 
         # exponential decay of learning rate
         #scheduler.step()
@@ -244,14 +259,15 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
         print(f'Validation PSNR: {epoch_psnr}')
 
         # save if best model
-        #if epoch_val_loss < best_val_loss:
-        if epoch_psnr > best_psnr:
+        if epoch_val_loss < best_val_loss:
+        #if epoch_psnr > best_psnr:
             print('Saving best model')
-            #best_val_loss = epoch_val_loss
+            best_val_loss = epoch_val_loss
             best_psnr = epoch_psnr
+            best_epoch = epoch
             epochs_since_improvement = 0
 
-            # save model
+            # save model, multi-gpu must save module to be compatible for loading on other devices
             if len(args.device_ids) > 1:
                 torch.save(model.module.state_dict(), os.path.join(args.model_dir, 'best_model.pt'))
             else:
@@ -266,7 +282,9 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
             print('Initiating early stopping')
             break
 
-    print(f'Best PSNR: {best_psnr}')
+    print(f'Best Epoch:{best_epoch}')
+    print(f'     PSNR: {best_psnr}')
+    print(f'     loss: {best_val_loss}')
 
     # saving final model
     print('Saving final model')
@@ -283,6 +301,7 @@ def parse_args():
     parser.add_argument('--patience', type=int, default=10, help='number of epochs of no improvment before early stopping')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--l2', type=float, default=1e-5, help='L2 coefficient')
+    parser.add_argument('--l1', type=float, default=1e-5, help='L1 coefficient')
     parser.add_argument('--lr_decay', type=float, default=0.94, help='learning rate decay factor')
     parser.add_argument('--num_layers', type=int, default=5, help='number of CNN layers in network')
     parser.add_argument('--num_filters', type=int, default=16, help='number of filters per CNN layer')
@@ -306,6 +325,7 @@ def main(args):
     setup_device(args)
 
     # applying random seed for reproducability
+    random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
