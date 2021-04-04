@@ -164,7 +164,7 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
                     'train_mean': args.train_mean, 'train_std': args.train_std}
 
     # save model parameters
-    history = {'model': model_params, 'train':[], 'val':[], 'psnr':[]}
+    history = {'model': model_params, 'lr': [], 'train':[], 'val':[], 'psnr':[]}
     pickle.dump(history, open(os.path.join(args.model_dir, 'model.npy'), 'wb'))
 
     # schedulers
@@ -254,6 +254,7 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
         #scheduler.step()
 
         # save epoch stats
+        history['lr'].append(optimizer.param_groups[0]["lr"])
         history['train'].append(epoch_train_loss)
         history['val'].append(epoch_val_loss)
         history['psnr'].append(epoch_psnr)
