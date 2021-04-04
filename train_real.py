@@ -79,8 +79,11 @@ def create_data_loaders(args):
 
     print(f'Loading dataset {args.det_type}')
     training_data = load_data(args.train_set, args.det_type.upper())
-    noisy_spectra = training_data['noisy_spectrum']
-    target_spectra = training_data['spectrum']
+
+    # filter out features above max KeV
+    max_idx = np.searchsorted(training_data['keV'], args.max_keV, side='left')
+    noisy_spectra = training_data['noisy_spectrum'][:, :max_idx]
+    target_spectra = training_data['spectrum'][:, :max_idx]
 
     assert noisy_spectra.shape == target_spectra.shape, 'Mismatch between shapes of training and target data'
     noisy_spectra = np.expand_dims(noisy_spectra, axis=1)
@@ -286,10 +289,7 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
     print(f'     PSNR: {best_psnr}')
     print(f'     loss: {best_val_loss}')
 
-    # saving final model
-    print('Saving final model')
-    torch.save(model.state_dict(), os.path.join(args.model_dir, 'final_model.pt'))
-    pickle.dump(history, open(os.path.join(args.model_dir, 'final_model.npy'), 'wb'))
+    return history
 
 def parse_args():
     parser = argparse. ArgumentParser(description='Gamma-Spectra Denoising Trainer')
@@ -299,6 +299,7 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=64, help='batch size for training')
     parser.add_argument('--epochs', type=int, default=1000, help='number of epochs')
     parser.add_argument('--patience', type=int, default=10, help='number of epochs of no improvment before early stopping')
+    parser.add_argument('--max_keV', type=float, default=1500, help='maximum keV used for input features')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--l2', type=float, default=1e-5, help='L2 coefficient')
     parser.add_argument('--l1', type=float, default=1e-5, help='L1 coefficient')
@@ -310,6 +311,8 @@ def parse_args():
     parser.add_argument('--res', default=False, help='use model with residual blocks', action='store_true')
     parser.add_argument('--seed', type=int, default=42, help='random seed')
     parser.add_argument('--model_dir', type=str, default='models', help='location of model files')
+    parser.add_argument('--exp_dir', type=str, default='exps', help='location of experiment model files (for experiments script)')
+
     args = parser.parse_args()
 
     return args
@@ -338,8 +341,13 @@ def main(args):
     print(f'number of parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}')
 
     # main training loop
-    train_model(model, criterion, optimizer, train_loader, val_loader, args)
+    history = train_model(model, criterion, optimizer, train_loader, val_loader, args)
     
+    # saving final model
+    print('Saving final model')
+    torch.save(model.state_dict(), os.path.join(args.model_dir, 'final_model.pt'))
+    pickle.dump(history, open(os.path.join(args.model_dir, 'final_model.npy'), 'wb'))
+
     print(f'Script completed in {time.time()-start:.2f} secs')
     return 0
 
