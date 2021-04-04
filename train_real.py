@@ -295,14 +295,14 @@ def parse_args():
     parser = argparse. ArgumentParser(description='Gamma-Spectra Denoising Trainer')
     parser.add_argument("-gn", "--gennoise", help="use noise as target", default=False, action="store_true")
     parser.add_argument('--det_type', type=str, default='NaI', help='detector type to train {HPGe, NaI, CZT}')
-    parser.add_argument('--train_set', type=str, default='data/NAI/training.h5', help='h5 file with training vectors')
+    parser.add_argument('--train_set', type=str, default='data/training.h5', help='h5 file with training vectors')
     parser.add_argument('--batch_size', type=int, default=64, help='batch size for training')
     parser.add_argument('--epochs', type=int, default=1000, help='number of epochs')
     parser.add_argument('--patience', type=int, default=10, help='number of epochs of no improvment before early stopping')
     parser.add_argument('--max_keV', type=float, default=1500, help='maximum keV used for input features')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
-    parser.add_argument('--l2', type=float, default=1e-5, help='L2 coefficient')
-    parser.add_argument('--l1', type=float, default=1e-5, help='L1 coefficient')
+    parser.add_argument('--l2', type=float, default=0.0, help='L2 coefficient')
+    parser.add_argument('--l1', type=float, default=0.0, help='L1 coefficient')
     parser.add_argument('--lr_decay', type=float, default=0.94, help='learning rate decay factor')
     parser.add_argument('--num_layers', type=int, default=5, help='number of CNN layers in network')
     parser.add_argument('--num_filters', type=int, default=16, help='number of filters per CNN layer')
@@ -341,6 +341,7 @@ def main(args):
     print(f'number of parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}')
 
     # main training loop
+    args.model_dir = f'{args.model_dir}-{os.uname()[1].split(".")[0]}'
     history = train_model(model, criterion, optimizer, train_loader, val_loader, args)
     
     # saving final model
