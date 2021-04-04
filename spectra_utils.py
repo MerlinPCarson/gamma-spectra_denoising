@@ -35,7 +35,7 @@ def data_load_normalized(fname, normalize=True, recalibrate=False):
         # time normalize
         if normalize:
             if 'MEAS_TIM' not in data:
-                log.warn(f"no MEAS_TIME in {fname}")
+                print(f"no MEAS_TIME in {fname}")
             else:
                 hits = hits / float(data['MEAS_TIM'].split(' ')[0])
     except Exception as e:
@@ -123,10 +123,13 @@ def generate_clean_spectra(rn_table, config, bucket_size, max_keV, spectrum_keV)
 def generate_spectrum_SNR(spectrum, background, compton, snr):
     
     # normalize spectrum vector by its magnitude
-    spectrum /= np.sqrt(np.sum(spectrum**2))
+    spectrum = spectrum / np.sqrt(np.sum(spectrum**2))
 
-    # normalize spectrum vector by its magnitude
-    background /= np.sqrt(np.sum(background**2))
+    # normalize compton vector by spectrum magnitude to maintain proportion
+    #compton = compton / np.sqrt(np.sum(spectrum**2))
+
+    # normalize background vector by its magnitude
+    background = background / np.sqrt(np.sum(background**2))
 
     # calculate RMS of signal, noise and Compton
     sRMS = np.sqrt(np.mean(spectrum**2))
@@ -134,7 +137,7 @@ def generate_spectrum_SNR(spectrum, background, compton, snr):
     cRMS = np.sqrt(np.mean(compton**2))
 
     #print(f"SNR background: {20*np.log10(sRMS/nRMS)}")
-    #print(f"SNR Compton: {20*np.log10(sRMS/nRMS)}")
+    #print(f"SNR Compton: {20*np.log10(sRMS/cRMS)}")
 
     # SNR in linear terms
     snr_lin = np.power(10, snr/20.0)
@@ -151,7 +154,11 @@ def generate_spectrum_SNR(spectrum, background, compton, snr):
     noise = background + compton
 
     # combine clean spectrum and noise sources
-    noise_spec = spectrum + noise 
+    noise_spec = spectrum + noise
+    #noise_spec = noise_spec / np.sqrt(np.sum(noise_spec**2))
+
+    # normalize clean spectrum vector by its magnitude
+    #spectrum = spectrum / np.sqrt(np.sum(spectrum**2))
 
     return spectrum, noise_spec, noise
 

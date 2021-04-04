@@ -25,28 +25,26 @@ def generate_spectra(config, sims_dir, bg_files, outdir, params, showfigs=False)
     for rn in tqdm(config['RADIONUCLIDES']):
         for clean_spectrum in glob(os.path.join(sims_dir, f'{rn}*-nocompton.json')):
             # load peak data time normalized 
-            #keV, hits = data_load_normalized(spectrum)
             keV, clean_hits = data_load_normalized(clean_spectrum)
             _, compton_hits = data_load_normalized(clean_spectrum.replace('nocompton','compton-only'))
-            #compare_spectra(keV, [hits, hits+compton], [f'{rn} clean', f'{rn} compton'])
 
             for background in backgrounds:
                 for compton_scale in params['Compton']:
                     # scale compton
                     scaled_compton_hits = compton_hits * compton_scale
-                    #print(f'compton scale {compton_scale}')
 
                     for snr in params['SNR']:
                         #print(f'{spectrum}:{compton_scale}:{snr}dB')
-                        clean_spectrum, noisy_spectrum, noise = generate_spectrum_SNR(clean_hits, background, scaled_compton_hits, snr)
+                        spectrum, noisy_spectrum, noise = generate_spectrum_SNR(clean_hits, background, scaled_compton_hits, snr)
                         spectra["name"].append(rn.encode('utf-8'))
-                        spectra["spectrum"].append(clean_spectrum)
+                        spectra["spectrum"].append(spectrum)
                         spectra["noisy_spectrum"].append(noisy_spectrum)
                         spectra["noise"].append(noise)
                         spectra["compton_scale"].append(compton_scale)
                         spectra["SNR"].append(snr)
                         if showfigs:
-                            compare_spectra(keV, [clean_spectrum, noisy_spectrum, noise], [f'{rn} clean', f'{rn} noisy (SNR={snr})','noise'])
+                            compare_spectra(keV, [spectrum, noisy_spectrum, noise], 
+                                                 [f'{rn} clean', f'{rn} noisy (SNR={snr})','noise'])
 
     spectra["keV"] = keV
 
@@ -72,13 +70,13 @@ def parse_args():
     parser.add_argument("-out", "--outfile", help="output file for data", default="data/training.h5")
     parser.add_argument("-det", "--dettype", help="detector type", default="NaI")
     parser.add_argument("-mcnp", "--mcnp_spectra", help="location of mcnp_simulated spectra",  default="data/mcnp_spectra/preproc_spectra")
-    parser.add_argument("-sf", "--savefigs", help="saves plots of templates", default=True, action="store_true")
+    parser.add_argument("-sf", "--showfigs", help="show figures when building dataset", default=False, action="store_true")
     parser.add_argument("-bg", "--background_dir", help="directory of background spectrum", default="background/NaI/Uranium")
     parser.add_argument("-maxsnr", "--maxsnr", help="maximum noise SNR", default=50.0, type=float)
     parser.add_argument("-minsnr", "--minsnr", help="minimum noise SNR", default=-25.0, type=float)
     parser.add_argument("-snrstep", "--snrstep", help="SNR step between min and max snr", default=5.0, type=float)
-    parser.add_argument("-maxc", "--maxcompton", help="maximum compton scale", default=5.0, type=float)
-    parser.add_argument("-minc", "--mincompton", help="minimum compton scale", default=1.0, type=float)
+    parser.add_argument("-maxc", "--maxcompton", help="maximum compton scale", default=1.0, type=float)
+    parser.add_argument("-minc", "--mincompton", help="minimum compton scale", default=0.0, type=float)
     parser.add_argument("-cstep", "--comptonstep", help="Compton scale step between min and max Compton", default=1.0, type=float)
     args = parser.parse_args()
 
@@ -108,9 +106,13 @@ def main(args):
 
     # find all background files
     backgrounds = glob(os.path.join(args.background_dir, '*.json'))
+
     # Generate the dataset with all radionuclides in config file at all Compton/SNRs
     print(f'Generating dataset for {dettype} detector')
-    dataset = generate_spectra(config, args.mcnp_spectra, backgrounds, outdir, params)
+    dataset = generate_spectra(config, args.mcnp_spectra, backgrounds, outdir, 
+                               params, showfigs=args.showfigs)
+
+    # save dataset to H5 file
     save_dataset(dettype, dataset, outfile)
 
     print(f'Script completed in {time.time()-start:.2f} secs')
