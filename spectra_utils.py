@@ -155,10 +155,10 @@ def generate_spectrum_SNR(spectrum, background, compton, snr):
 
     # combine clean spectrum and noise sources
     noise_spec = spectrum + noise
-    #noise_spec = noise_spec / np.sqrt(np.sum(noise_spec**2))
+    noise_spec = noise_spec / np.sqrt(np.sum(noise_spec**2))
 
     # normalize clean spectrum vector by its magnitude
-    #spectrum = spectrum / np.sqrt(np.sum(spectrum**2))
+    spectrum = spectrum / np.sqrt(np.sum(spectrum**2))
 
     return spectrum, noise_spec, noise
 
