@@ -12,6 +12,7 @@ from train_real import create_data_loaders
 from train_real import build_model
 from train_real import train_model
 
+from copy import deepcopy
 from sklearn.model_selection import ParameterGrid
 
 
@@ -75,7 +76,7 @@ def main(args):
         history = train_model(model, criterion, optimizer, train_loader, val_loader, args)
 
         # save results after each iteration, so nothing is lost if there is a failure
-        exp_results.append({'params': vars(args), 'history': history})
+        exp_results.append({'params': vars(deepcopy(args)), 'history': history})
         pickle.dump(exp_results, open(os.path.join(args.exp_dir, 'exp_results.npy'), 'wb'))
 
     print(f'Script completed in {time.time()-start:.2f} secs')
