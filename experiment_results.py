@@ -18,12 +18,6 @@ def best_results(results):
     print(f'{np.min(final_losses)} with params l1 = {results[best_exp]["params"]["l1"]}, l2 = {results[best_exp]["params"]["l1"]}')
 
     return final_losses, final_PSNRs
-    #for psnr in PSNRs:
-    #    print(f'{max(psnr):.4f} dB ?= {psnr[-12]:.4f}')
-    #for i in range(len(results)):
-    #    loss = results[i]['history']['val']
-    #    print(min(loss), loss[-(results[i]['params']['patience']+2)])
-    #print(losses)
 
 def get_params_mesh(losses):
 
