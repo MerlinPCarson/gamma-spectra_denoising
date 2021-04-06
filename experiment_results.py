@@ -17,6 +17,7 @@ def best_results(results, param1, param2):
     param2_vals = np.array([exp['params'][param2] for exp in results])
 
     best_exp = np.argmin(final_losses)
+    print(f'Best model model_{best_exp}')
     print(f'{final_losses[best_exp]} val loss with params l1 = {results[best_exp]["params"]["l1"]}, l2 = {results[best_exp]["params"]["l2"]}')
     print(f'{final_PSNRs[best_exp]} dB with params l1 = {results[best_exp]["params"]["l1"]}, l2 = {results[best_exp]["params"]["l2"]}')
 
