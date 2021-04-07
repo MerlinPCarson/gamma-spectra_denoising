@@ -39,7 +39,7 @@ def generate_spectra(config, sims_dir, bg_files, params, augment=False, showfigs
 
                         if augment:
                             # 50/50 chance of augmenting
-                            if np.random.choice([0,1]) == 1:
+                            if np.random.choice([0,1,2]) < 2:
                                 # 50/50 chance of shifting direction  
                                 if np.random.choice([0,1]) == 1:
                                     # number of channels to shift right

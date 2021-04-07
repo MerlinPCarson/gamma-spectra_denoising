@@ -52,8 +52,8 @@ def weight_decay(model):
     params = []
     for name, param in model.named_parameters():
         # set all batchnorm layers L2 regularization to 0
-        if name.split('.')[-2] in batchnorm_layers:
-            #print(f'setting weight decay to 0 for layer {name}')
+        if name.split('.')[-2] in batchnorm_layers or 'bias' in name:
+            print(f'setting weight decay to 0 for layer {name}')
             params.append({'params': param, 'weight_decay': 0.0})
         else:
             params.append({'params': param})
@@ -146,7 +146,7 @@ def build_model(args):
     # setup loss and optimizer
     criterion = torch.nn.MSELoss(reduction='sum').to(args.device)
     params = model.parameters()
-    #params = weight_decay(model)
+    params = weight_decay(model)
     optimizer = torch.optim.AdamW(params, lr=args.lr, betas=(.9, .999), eps=1e-8, weight_decay=args.l2, amsgrad=False)
 
     return model, criterion, optimizer

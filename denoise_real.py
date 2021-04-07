@@ -25,7 +25,6 @@ from sklearn.model_selection import train_test_split
 from skimage.metrics import peak_signal_noise_ratio as psnr
 
 
-    
 def psnr_of_batch(clean_imgs, denoised_imgs):
     batch_psnr = 0
     for i in range(clean_imgs.shape[0]):
@@ -35,7 +34,7 @@ def psnr_of_batch(clean_imgs, denoised_imgs):
 def parse_args():
     parser = argparse. ArgumentParser(description='Gamma-Spectra Denoising testing dataset')
     parser.add_argument('--dettype', type=str, default='NaI', help='detector type to train {HPGe, NaI, CZT}')
-    parser.add_argument('--test_set', type=str, default='data/NAI/training.h5', help='h5 file with training vectors')
+    parser.add_argument('--test_set', type=str, default='data/training.h5', help='h5 file with training vectors')
     parser.add_argument('--all', default=False, help='denoise all examples in test_set file', action='store_true')
     parser.add_argument('--batch_size', type=int, default=48, help='batch size for denoising')
     parser.add_argument('--seed', type=int, help='random seed')
