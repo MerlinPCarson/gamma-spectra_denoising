@@ -88,10 +88,10 @@ def main(args):
     # create and load model
     if params['model_name'] == 'DnCNN':
         model = DnCNN(num_channels=params['num_channels'], num_layers=params['num_layers'],
-                      kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']).to(args.device)
+                      kernel_size=params['kernel_size'], num_filters=params['num_filters']).to(args.device)
     elif params['model_name'] == 'DnCNN-res':
         model = DnCNN_Res(num_channels=params['num_channels'], num_layers=params['num_layers'],
-                      kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']).to(args.device)
+                      kernel_size=params['kernel_size'], num_filters=params['num_filters']).to(args.device)
     else:
         print(f'Model name {params["model_name"]} is not supported.')
         return 1
