@@ -24,11 +24,12 @@ from train_real import setup_device
 from sklearn.model_selection import train_test_split
 from skimage.metrics import peak_signal_noise_ratio as psnr
 
-        
+
+    
 def psnr_of_batch(clean_imgs, denoised_imgs):
     batch_psnr = 0
     for i in range(clean_imgs.shape[0]):
-        batch_psnr += psnr(clean_imgs[i,:], denoised_imgs[i,:], data_range=1)
+        batch_psnr += psnr(clean_imgs[i,:], denoised_imgs[i,:], data_range=None)
     return batch_psnr/clean_imgs.shape[0]
 
 def parse_args():
@@ -106,10 +107,10 @@ def main(args):
     # create and load model
     if params['model_name'] == 'DnCNN':
         model = DnCNN(num_channels=params['num_channels'], num_layers=params['num_layers'], 
-                      kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']).to(args.device)
+                      kernel_size=params['kernel_size'], num_filters=params['num_filters']).to(args.device)
     elif params['model_name'] == 'DnCNN-res':
         model = DnCNN_Res(num_channels=params['num_channels'], num_layers=params['num_layers'], 
-                      kernel_size=params['kernel_size'], stride=params['stride'], num_filters=params['num_filters']).to(args.device)
+                      kernel_size=params['kernel_size'], num_filters=params['num_filters']).to(args.device)
     else:
         print(f'Model name {params["model_name"]} is not supported.')
         return 1

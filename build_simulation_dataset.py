@@ -71,7 +71,7 @@ def parse_args():
     parser.add_argument("-det", "--dettype", help="detector type", default="NaI")
     parser.add_argument("-mcnp", "--mcnp_spectra", help="location of mcnp_simulated spectra",  default="data/mcnp_spectra/preproc_spectra")
     parser.add_argument("-sf", "--showfigs", help="show figures when building dataset", default=False, action="store_true")
-    parser.add_argument("-bg", "--background_dir", help="directory of background spectrum", default="background/NaI/Uranium")
+    parser.add_argument("-bg", "--background_dir", help="directory of background spectrum", default="background/NaI")
     parser.add_argument("-maxsnr", "--maxsnr", help="maximum noise SNR", default=50.0, type=float)
     parser.add_argument("-minsnr", "--minsnr", help="minimum noise SNR", default=-25.0, type=float)
     parser.add_argument("-snrstep", "--snrstep", help="SNR step between min and max snr", default=5.0, type=float)

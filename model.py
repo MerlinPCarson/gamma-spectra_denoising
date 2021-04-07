@@ -20,13 +20,13 @@ class DnCNN(nn.Module):
 
         # create module list
         self.layers = []
-        self.layers.append(nn.Conv1d(in_channels=num_channels, out_channels=num_filters, kernel_size=kernel_size, padding=padding, bias=False))
+        self.layers.append(nn.Conv1d(in_channels=num_channels, out_channels=num_filters, stride=stride, kernel_size=kernel_size, padding=padding, bias=False))
         self.layers.append(nn.LeakyReLU())
         for i in range(num_layers-2):
-            self.layers.append(nn.Conv1d(in_channels=num_filters, out_channels=num_filters, kernel_size=kernel_size, padding=padding, bias=False))
+            self.layers.append(nn.Conv1d(in_channels=num_filters, out_channels=num_filters, stride=stride, kernel_size=kernel_size, padding=padding, bias=False))
             self.layers.append(nn.BatchNorm1d(num_filters))
             self.layers.append(nn.LeakyReLU())
-        self.layers.append(nn.Conv1d(in_channels=num_filters, out_channels=num_channels, kernel_size=kernel_size, padding=padding, bias=False))
+        self.layers.append(nn.Conv1d(in_channels=num_filters, out_channels=num_channels, stride=stride, kernel_size=kernel_size, padding=padding, bias=False))
         self.model = nn.ModuleList(self.layers)
         init_weights(self.model)
 

@@ -134,10 +134,10 @@ def build_model(args):
     # create model
     if not args.res:
         model = DnCNN(num_channels=args.num_channels, num_layers=args.num_layers, 
-                      kernel_size=args.filter_size, stride=args.stride, num_filters=args.num_filters).to(args.device) 
+                      kernel_size=args.filter_size,  num_filters=args.num_filters).to(args.device) 
     else:
         model = DnCNN_Res(num_channels=args.num_channels, num_layers=args.num_layers, 
-                      kernel_size=args.filter_size, stride=args.stride, num_filters=args.num_filters).to(args.device)
+                      kernel_size=args.filter_size, num_filters=args.num_filters).to(args.device)
     
     # if more than 1 GPU, prepare model for data parallelism (use multiple GPUs)
     if len(args.device_ids) > 1:
@@ -160,8 +160,9 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
                     'model_type': 'Gen-noise' if args.gennoise else 'Gen-spectrum', 
                     'train_seed': args.seed, 'num_channels':args.num_channels, 
                     'num_layers':args.num_layers, 'kernel_size':args.filter_size,
-                    'stride':args.stride, 'num_filters':args.num_filters, 
-                    'train_mean': args.train_mean, 'train_std': args.train_std}
+                    'num_filters':args.num_filters, 'max_keV': args.max_keV,
+                    'train_mean': args.train_mean, 'train_std': args.train_std,
+                    'l1': args.l1, 'l2': args.l2}
 
     # save model parameters
     history = {'model': model_params, 'lr': [], 'train':[], 'val':[], 'psnr':[]}
@@ -199,7 +200,11 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
             preds = model(noisy_spectra)
 
             # calculate loss
-            loss = criterion(preds, target)/(2*len(noisy_spectra)) + args.l1 * l1_cost(model)
+            if args.l1 != 0.0
+                loss = criterion(preds, target)/(2*len(noisy_spectra)) + args.l1 * l1_cost(model)
+            else:
+                loss = criterion(preds, target)/(2*len(noisy_spectra))
+
             epoch_train_loss += loss.item()
 
             # backprop
@@ -308,7 +313,6 @@ def parse_args():
     parser.add_argument('--num_layers', type=int, default=5, help='number of CNN layers in network')
     parser.add_argument('--num_filters', type=int, default=16, help='number of filters per CNN layer')
     parser.add_argument('--filter_size', type=int, default=3, help='size of filter for CNN layers')
-    parser.add_argument('--stride', type=int, default=1, help='filter stride for CNN layers')
     parser.add_argument('--res', default=False, help='use model with residual blocks', action='store_true')
     parser.add_argument('--seed', type=int, default=42, help='random seed')
     parser.add_argument('--model_dir', type=str, default='models', help='location of model files')

@@ -51,8 +51,8 @@ def main(args):
     param_grid = create_grid() 
     num_exps = len(ParameterGrid(param_grid))
     exp_results = [] 
-    for i, params in enumerate(ParameterGrid(param_grid), start=1):
-        print(f'[{i}/{num_exps}] Starting experiment with params {params}')
+    for i, params in enumerate(ParameterGrid(param_grid)):
+        print(f'[{i+1}/{num_exps}] Starting experiment with params {params}')
         args.model_dir = os.path.join(args.exp_dir, f'{model_dir}_{i}')
         print(args.model_dir)
         for param, val in params.items():
