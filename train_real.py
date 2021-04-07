@@ -200,7 +200,7 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
             preds = model(noisy_spectra)
 
             # calculate loss
-            if args.l1 != 0.0
+            if args.l1 != 0.0:
                 loss = criterion(preds, target)/(2*len(noisy_spectra)) + args.l1 * l1_cost(model)
             else:
                 loss = criterion(preds, target)/(2*len(noisy_spectra))
