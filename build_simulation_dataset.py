@@ -14,10 +14,17 @@ from spectra_utils import generate_spectrum_SNR
 from plot_utils import compare_spectra
 
 
+def load_background(bg_file):
+
+    keV, hits = data_load_normalized(bg_file)
+
+    return hits
+
 def generate_spectra(config, sims_dir, bg_files, params, augment=False, showfigs=False):
 
     # load all background intensities
-    backgrounds = [np.array(json.load(open(background))['HIT'], dtype=np.float32) for background in bg_files] 
+    backgrounds = [load_background(bg_file) for bg_file in bg_files] 
+
     # create datastruct for dataset
     spectra = {"name": [], "spectrum": [], "noisy_spectrum": [], "noise": [], "compton_scale": [], "SNR": []} 
 
@@ -28,13 +35,21 @@ def generate_spectra(config, sims_dir, bg_files, params, augment=False, showfigs
             keV, clean_hits = data_load_normalized(clean_spectrum)
             _, compton_hits = data_load_normalized(clean_spectrum.replace('nocompton','compton-only'))
 
+            # find zero keV index for removing noise at and below it
+            zero_keV_idx = np.searchsorted(keV, 0.0, side='left')
+
             for background in backgrounds:
+
+                # remove photoelectric below 0 keV bin
+                background[:zero_keV_idx+1] = 0.0
+
                 for compton_scale in params['Compton']:
                     # scale compton
                     scaled_compton_hits = compton_hits * compton_scale
 
                     for snr in params['SNR']:
                         spectrum, noisy_spectrum, noise = generate_spectrum_SNR(clean_hits, background, scaled_compton_hits, snr)
+    
                         add_spectrum(spectra, rn, keV, spectrum, noisy_spectrum, noise, compton_scale, snr, showfigs)
 
                         if augment:
