@@ -94,7 +94,7 @@ def parse_args():
     parser.add_argument('--r', type=str, default='data/mcnp_spectra/spectra', help='location of MCNP simulations')
     args = parser.parse_args()
 
-    # make sure config filre exists
+    # make sure config file exists
     assert os.path.isfile(args.configfile), f'Configuration file {args.configfile} not found!'
 
     # make sure spectra to preprocess directory exists

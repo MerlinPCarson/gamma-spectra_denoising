@@ -18,8 +18,10 @@ def best_results(results, param1, param2):
 
     best_exp = np.argmin(final_losses)
     print(f'Best model model_{best_exp}')
-    print(f'{final_losses[best_exp]} val loss with params l1 = {results[best_exp]["params"]["l1"]}, l2 = {results[best_exp]["params"]["l2"]}')
-    print(f'{final_PSNRs[best_exp]} dB with params l1 = {results[best_exp]["params"]["l1"]}, l2 = {results[best_exp]["params"]["l2"]}')
+    print(f'{final_losses[best_exp]} val loss with params {param1} = {results[best_exp]["params"][param1]}, \
+            {param2} = {results[best_exp]["params"][param2]}')
+    print(f'{final_PSNRs[best_exp]} dB with params {param1} = {results[best_exp]["params"][param1]}, \
+            {param2} = {results[best_exp]["params"][param2]}')
 
     return final_losses, final_PSNRs, param1_vals, param2_vals
 
@@ -34,7 +36,7 @@ def get_params_mesh(losses, x1, x2):
 
     return X, Y, Z
 
-def plot_contour(X, Y, Z, metric, title):
+def plot_contour(X, Y, Z, metric, title, param1, param2):
     
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
     surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1,
@@ -48,9 +50,9 @@ def plot_contour(X, Y, Z, metric, title):
     y_vals = [str(y) for y in Y[:,0]]
 
     ax.set_title(title)
-    ax.set_xlabel('L1 (λ)')
+    ax.set_xlabel(param1)
     ax.set_xticklabels(x_vals)
-    ax.set_ylabel('L2 (λ)')
+    ax.set_ylabel(param2)
     ax.set_yticklabels(y_vals)
     ax.set_zlabel(metric)
 
@@ -77,10 +79,10 @@ def main(args):
     losses, psnrs, param1_vals, param2_vals = best_results(results, args.param1, args.param2)
 
     X, Y, Z = get_params_mesh(losses, param1_vals, param2_vals)
-    plot_contour(X, Y, Z, 'validation loss', args.exp_type)
+    plot_contour(X, Y, Z, 'validation loss', args.exp_type, args.param1, args.param2)
 
     X, Y, Z = get_params_mesh(psnrs, param1_vals, param2_vals)
-    plot_contour(X, Y, Z, 'validation PSNR', args.exp_type)
+    plot_contour(X, Y, Z, 'validation PSNR', args.exp_type, args.param1, args.param2)
 
     print(f'Script completed in {time.time()-start:.2f} secs')
 
