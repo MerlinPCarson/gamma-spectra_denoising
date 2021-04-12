@@ -1,5 +1,5 @@
 {
- "RADIONUCLIDES": ["57Co", "60Co", "137Cs", "152Eu", "239Pu", "235U"],
+ "RADIONUCLIDES": ["57Co", "60Co", "137Cs", "152Eu", "231Th", "239Pu", "235U"],
  "DETECTORS": {"HPGE": {"ENER_FIT": [0.00, 1.5], "NUM_CHANNELS": 1024, "ATOMIC_NUM": 32,
                              "SMOOTH_PARAMS": {"k0": 2.73405721e+00, "k1": 7.30409309e-02, "k2": 3.68774012e-11}, 
                              "EFFICIENCY": {"LOW": {"COEFS":[-5.28E-01, 1.48E-02, -1.83E-05],"POWERS": [0, 1, 2], "MAX_KEV": 121.8}, 
