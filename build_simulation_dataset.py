@@ -16,9 +16,9 @@ from plot_utils import compare_spectra
 
 def load_background(bg_file):
 
-    keV, hits = data_load_normalized(bg_file)
+    keV, hits = data_load_normalized(bg_file, normalize=False)
 
-    return hits
+    return np.array(hits, dtype=np.float32)
 
 def generate_spectra(config, sims_dir, bg_files, params, augment=False, showfigs=False):
 
@@ -36,7 +36,7 @@ def generate_spectra(config, sims_dir, bg_files, params, augment=False, showfigs
             _, compton_hits = data_load_normalized(clean_spectrum.replace('nocompton','compton-only'))
 
             # find zero keV index for removing noise at and below it
-            zero_keV_idx = np.searchsorted(keV, 0.0, side='left')
+            zero_keV_idx = np.searchsorted(keV, 2.5, side='left')
 
             for background in backgrounds:
 

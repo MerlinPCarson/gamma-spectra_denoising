@@ -201,9 +201,9 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
 
             # calculate loss
             if args.l1 != 0.0:
-                loss = criterion(preds, target)/(2*len(noisy_spectra)) + args.l1 * l1_cost(model)
+                loss = criterion(preds, target)#/(2*len(noisy_spectra)) + args.l1 * l1_cost(model)
             else:
-                loss = criterion(preds, target)/(2*len(noisy_spectra))
+                loss = criterion(preds, target)#/(2*len(noisy_spectra))
 
             epoch_train_loss += loss.item()
 
@@ -234,7 +234,11 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
                 preds = model(x_val)
 
                 # calculate loss
-                val_loss = criterion(preds, target)/(2*len(noisy_spectra)) + args.l1 * l1_cost(model)
+                if args.l1 != 0.0:
+                    val_loss = criterion(preds, target)#/(2*len(noisy_spectra)) + args.l1 * l1_cost(model)
+                else:
+                    val_loss = criterion(preds, target)#/(2*len(noisy_spectra))
+
                 epoch_val_loss += val_loss.item()
 
                 # calculate PSNR 
