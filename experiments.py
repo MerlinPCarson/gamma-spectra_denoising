@@ -23,13 +23,31 @@ def create_grid():
     start = 1e-5 
     end = 1 
     num_steps = 6
-    l1_params = [start * 10**x for x in range(num_steps)]
-    l1_params.insert(0, 0.0)
-    grid['l1'] = l1_params
 
-    l2_params = [start * 10**x for x in range(num_steps)]
-    l2_params.insert(0, 0.0)
-    grid['l2'] = l2_params
+    # regularization
+    #l1_params = [start * 10**x for x in range(num_steps)]
+    #l1_params.insert(0, 0.0)
+    #l1_params = [0.0] 
+    #grid['l1'] = l1_params
+
+    #l2_params = [start * 10**x for x in range(num_steps)]
+    #l2_params.insert(0, 0.0)
+    #l2_params = np.arange(0,2.0,0.1)
+    #grid['l2'] = l2_params
+
+    # layer sizes
+    #width_params = [16,32,64,128]
+    #grid['num_filters'] = width_params
+
+    #depth_params = [5,10,15,20]
+    #grid['num_layers'] = depth_params
+
+    # training params 
+    lr_params = [0.1, 0.01, 0.001, 0.0001]
+    grid['lr'] = lr_params
+
+    batch_params = [36, 64, 128, 256]
+    grid['batch_size'] = batch_params
 
     return grid
 
@@ -50,6 +68,7 @@ def main(args):
 
     param_grid = create_grid() 
     num_exps = len(ParameterGrid(param_grid))
+    print(f'Starting experiments with parameters and values: {list(ParameterGrid(param_grid))}')
     exp_results = [] 
     for i, params in enumerate(ParameterGrid(param_grid)):
         print(f'[{i+1}/{num_exps}] Starting experiment with params {params}')
