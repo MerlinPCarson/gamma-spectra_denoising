@@ -32,8 +32,8 @@ def create_grid():
 
     #l2_params = [start * 10**x for x in range(num_steps)]
     #l2_params.insert(0, 0.0)
-    #l2_params = np.arange(0,2.0,0.1)
-    #grid['l2'] = l2_params
+    l2_params = np.arange(0, 1.55, 0.25)
+    grid['l2'] = l2_params
 
     # layer sizes
     #width_params = [16,32,64,128]
@@ -43,10 +43,10 @@ def create_grid():
     #grid['num_layers'] = depth_params
 
     # training params 
-    lr_params = [0.1, 0.01, 0.001, 0.0001]
-    grid['lr'] = lr_params
+    #lr_params = [0.1, 0.01, 0.001, 0.0001]
+    #grid['lr'] = lr_params
 
-    batch_params = [36, 64, 128, 256]
+    batch_params = [32,64]
     grid['batch_size'] = batch_params
 
     return grid

@@ -13,17 +13,18 @@ def init_weights(model):
 
 
 class DnCNN(nn.Module):
-    def __init__(self, num_channels=1, num_layers=17, kernel_size=3, stride=1, num_filters=64):
+    def __init__(self, num_channels=1, num_layers=17, kernel_size=3, stride=1, num_filters=64, dilation_rate=3):
         super(DnCNN, self).__init__()
 
         padding = int((kernel_size-1)/2)
+        padding_d = math.floor((kernel_size + (kernel_size-1) * (dilation_rate-1))/2)
 
         # create module list
         self.layers = []
         self.layers.append(nn.Conv1d(in_channels=num_channels, out_channels=num_filters, stride=stride, kernel_size=kernel_size, padding=padding, bias=False))
         self.layers.append(nn.LeakyReLU())
         for i in range(num_layers-2):
-            self.layers.append(nn.Conv1d(in_channels=num_filters, out_channels=num_filters, stride=stride, kernel_size=kernel_size, padding=padding, bias=False))
+            self.layers.append(nn.Conv1d(in_channels=num_filters, dilation=dilation_rate, out_channels=num_filters, stride=stride, kernel_size=kernel_size, padding=padding_d, bias=False))
             self.layers.append(nn.BatchNorm1d(num_filters))
             self.layers.append(nn.LeakyReLU())
         self.layers.append(nn.Conv1d(in_channels=num_filters, out_channels=num_channels, stride=stride, kernel_size=kernel_size, padding=padding, bias=False))

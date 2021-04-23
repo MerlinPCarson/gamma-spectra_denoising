@@ -38,7 +38,7 @@ def compare_spectra(keV, spectra, titles, min_keV=-10, max_keV=1500, outfile=Non
     plt.tight_layout()
 
     if savefigs and outfile:
-        plt.savefig(outfile, format='pdf', dpi=300)
+        plt.savefig(outfile, dpi=300)
 
     if showfigs:
         plt.show()

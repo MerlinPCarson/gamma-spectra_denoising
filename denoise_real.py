@@ -17,7 +17,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from load_data_real import load_data
 from build_simulation_dataset import save_dataset
-from plot_utils import compare_results
+from PaperArtifacts import compare_spectra
 from model import DnCNN, DnCNN_Res
 from train_real import setup_device
 
@@ -42,6 +42,8 @@ def parse_args():
     parser.add_argument('--outdir', type=str, help='location to save output plots')
     parser.add_argument('--outfile', type=str, help='location to save output data', default='denoised.h5')
     parser.add_argument('--savefigs', help='saves plots of results', default=True, action='store_true')
+    parser.add_argument('--min_keV', type=float, default=0.0, help='minimum keV to plot')
+    parser.add_argument('--max_keV', type=float, default=1500.0, help='maximum keV to plot')
     args = parser.parse_args()
 
     return args
@@ -106,10 +108,12 @@ def main(args):
     # create and load model
     if params['model_name'] == 'DnCNN':
         model = DnCNN(num_channels=params['num_channels'], num_layers=params['num_layers'], 
-                      kernel_size=params['kernel_size'], num_filters=params['num_filters']).to(args.device)
+                      kernel_size=params['kernel_size'], num_filters=params['num_filters'],
+                      dilation_rate=params['dilation_rate']).to(args.device)
     elif params['model_name'] == 'DnCNN-res':
         model = DnCNN_Res(num_channels=params['num_channels'], num_layers=params['num_layers'], 
-                      kernel_size=params['kernel_size'], num_filters=params['num_filters']).to(args.device)
+                      kernel_size=params['kernel_size'], num_filters=params['num_filters'],
+                      dilation_rate=params['dilation_rate']).to(args.device)
     else:
         print(f'Model name {params["model_name"]} is not supported.')
         return 1
@@ -158,8 +162,11 @@ def main(args):
             if args.savefigs:
                 psnr_noisy = psnr_of_batch(clean_spectra[0], noisy_spectra[0])
                 psnr_denoised = psnr_of_batch(clean_spectra[0], denoised_spectrum[0])
-                compare_results(spectra_keV, clean_spectra[0,0,:], noisy_spectra[0,0,:], denoised_spectrum[0,0,:],
-                                psnr_denoised-psnr_noisy, args.outdir, str(num))
+                titles = ['Noisy Spectrum', 'Target Spectrum', f'Denoised Spectrum ({psnr_denoised-psnr_noisy:.2f} dB)']
+                outfile = os.path.join(args.outdir, f'{num}-results.pdf')
+                compare_spectra(spectra_keV, [noisy_spectra[0,0,:], clean_spectra[0,0,:], denoised_spectrum[0,0,:]], titles, args.min_keV, args.max_keV, outfile, savefigs=True)
+                outfile = os.path.join(args.outdir, f'{num}-results.png')
+                compare_spectra(spectra_keV, [noisy_spectra[0,0,:], clean_spectra[0,0,:], denoised_spectrum[0,0,:]], titles, args.min_keV, args.max_keV, outfile, savefigs=True)
 
     # save denoised data to file, currently only supports entire dataset
     if args.all:
