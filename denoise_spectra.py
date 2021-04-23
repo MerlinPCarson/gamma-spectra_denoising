@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from torch.autograd import Variable
 
 from load_data_real import load_spectra
-from plot_utils import compare_spectra
+from PaperArtifacts import compare_spectra
 from model import DnCNN, DnCNN_Res
 from train_real import setup_device
 
@@ -88,10 +88,12 @@ def main(args):
     # create and load model
     if params['model_name'] == 'DnCNN':
         model = DnCNN(num_channels=params['num_channels'], num_layers=params['num_layers'],
-                      kernel_size=params['kernel_size'], num_filters=params['num_filters']).to(args.device)
+                      kernel_size=params['kernel_size'], num_filters=params['num_filters'],
+                      dilation_rate=params['dilation_rate']).to(args.device)
     elif params['model_name'] == 'DnCNN-res':
         model = DnCNN_Res(num_channels=params['num_channels'], num_layers=params['num_layers'],
-                      kernel_size=params['kernel_size'], num_filters=params['num_filters']).to(args.device)
+                      kernel_size=params['kernel_size'], num_filters=params['num_filters'],
+                      dilation_rate=params['dilation_rate']).to(args.device)
     else:
         print(f'Model name {params["model_name"]} is not supported.')
         return 1
@@ -132,9 +134,13 @@ def main(args):
             infile = os.path.basename(test_files[num])
             print(f'[{num+1}/{len(spectra_loader)}] Denoising {infile}')
             if args.savefigs:
-                outfile = os.path.join(args.outdir, infile.replace('.json',''))
+                outfile = os.path.join(args.outdir, infile.replace('.json','.pdf'))
                 compare_spectra(spectra_keV[num], [spectra[0,0,:], denoised_spectrum[0,0,:]], 
-                               [spectra_name[num], 'DNN denoised'], outfile=outfile,
+                               [spectra_name[num], 'GS-DnCNN denoised'], outfile=outfile,
+                                savefigs=args.savefigs, showfigs=args.showfigs)
+                outfile = os.path.join(args.outdir, infile.replace('.json','.png'))
+                compare_spectra(spectra_keV[num], [spectra[0,0,:], denoised_spectrum[0,0,:]], 
+                               [spectra_name[num], 'GS-DnCNN denoised'], outfile=outfile,
                                 savefigs=args.savefigs, showfigs=args.showfigs)
 
     # save denoised data to file, currently only supports entire dataset

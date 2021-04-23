@@ -137,7 +137,8 @@ def build_model(args):
                       kernel_size=args.filter_size,  num_filters=args.num_filters).to(args.device) 
     else:
         model = DnCNN_Res(num_channels=args.num_channels, num_layers=args.num_layers, 
-                      kernel_size=args.filter_size, num_filters=args.num_filters).to(args.device)
+                      kernel_size=args.filter_size, num_filters=args.num_filters,
+                      dilation_rate=args.dilation_rate).to(args.device)
     
     # if more than 1 GPU, prepare model for data parallelism (use multiple GPUs)
     if len(args.device_ids) > 1:
@@ -158,6 +159,7 @@ def train_model(model, criterion, optimizer, train_loader, val_loader, args):
     # data struct to track training and validation losses per epoch
     model_params = {'model_name': 'DnCNN-res' if args.res else 'DnCNN', 
                     'model_type': 'Gen-noise' if args.gennoise else 'Gen-spectrum', 
+                    'batch_size': args.batch_size, 'dilation_rate': args.dilation_rate,
                     'train_seed': args.seed, 'num_channels':args.num_channels, 
                     'num_layers':args.num_layers, 'kernel_size':args.filter_size,
                     'num_filters':args.num_filters, 'max_keV': args.max_keV,
@@ -317,6 +319,7 @@ def parse_args():
     parser.add_argument('--num_layers', type=int, default=5, help='number of CNN layers in network')
     parser.add_argument('--num_filters', type=int, default=16, help='number of filters per CNN layer')
     parser.add_argument('--filter_size', type=int, default=3, help='size of filter for CNN layers')
+    parser.add_argument('--dilation_rate', type=int, default=3, help='dilation rate for denoising blocks')
     parser.add_argument('--res', default=False, help='use model with residual blocks', action='store_true')
     parser.add_argument('--seed', type=int, default=42, help='random seed')
     parser.add_argument('--model_dir', type=str, default='models', help='location of model files')
