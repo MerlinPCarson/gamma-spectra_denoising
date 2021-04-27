@@ -163,7 +163,7 @@ def main(args):
             if args.savefigs:
                 psnr_noisy = psnr_of_batch(clean_spectra[0], noisy_spectra[0])
                 psnr_denoised = psnr_of_batch(clean_spectra[0], denoised_spectrum[0])
-                titles = ['Noisy Spectrum', 'Target Spectrum', f'Denoised Spectrum ({psnr_denoised-psnr_noisy:.2f} dB)']
+                titles = ['Noisy Spectrum', 'Target Spectrum', f'GS-DnCNN Denoised (+{psnr_denoised-psnr_noisy:.2f} dB)']
                 outfile = os.path.join(args.outdir, f'{num}-results.pdf')
                 colors = ['green', 'blue', 'red']
                 linestyles = ['-.', '-', '--']
