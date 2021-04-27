@@ -36,7 +36,7 @@ def generate_spectra(config, sims_dir, bg_files, params, augment=False, showfigs
             _, compton_hits = data_load_normalized(clean_spectrum.replace('nocompton','compton-only'))
 
             # find zero keV index for removing noise at and below it
-            zero_keV_idx = np.searchsorted(keV, 2.5, side='left')
+            zero_keV_idx = np.searchsorted(keV, 0.0, side='left')
 
             for background in backgrounds:
 

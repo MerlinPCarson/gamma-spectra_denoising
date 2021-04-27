@@ -41,6 +41,8 @@ def parse_args():
     parser.add_argument('--saveresults', help='saves output to .h5 and json files', default=True, action='store_true')
     parser.add_argument('--savefigs', help='saves plots of each denoised spectra', default=True, action='store_true')
     parser.add_argument('--showfigs', help='shows plots of each denoised spectra', default=False, action='store_true')
+    parser.add_argument('--min_keV', type=float, default=0.0, help='minimum keV to plot')
+    parser.add_argument('--max_keV', type=float, default=1500.0, help='maximum keV to plot')
     args = parser.parse_args()
 
     return args
@@ -136,12 +138,14 @@ def main(args):
             if args.savefigs:
                 outfile = os.path.join(args.outdir, infile.replace('.json','.pdf'))
                 compare_spectra(spectra_keV[num], [spectra[0,0,:], denoised_spectrum[0,0,:]], 
-                               [spectra_name[num], 'GS-DnCNN denoised'], outfile=outfile,
-                                savefigs=args.savefigs, showfigs=args.showfigs)
+                                [spectra_name[num], 'GS-DnCNN denoised'], args.min_keV, args.max_keV,
+                                outfile=outfile, savefigs=args.savefigs, showfigs=args.showfigs,
+                                ylabel='Counts')
                 outfile = os.path.join(args.outdir, infile.replace('.json','.png'))
                 compare_spectra(spectra_keV[num], [spectra[0,0,:], denoised_spectrum[0,0,:]], 
-                               [spectra_name[num], 'GS-DnCNN denoised'], outfile=outfile,
-                                savefigs=args.savefigs, showfigs=args.showfigs)
+                                [spectra_name[num], 'GS-DnCNN denoised'], args.min_keV, args.max_keV,
+                                outfile=outfile, savefigs=args.savefigs, showfigs=args.showfigs,
+                                ylabel='Counts')
 
     # save denoised data to file, currently only supports entire dataset
     if args.saveresults:
