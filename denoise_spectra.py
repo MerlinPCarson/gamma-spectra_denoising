@@ -138,12 +138,12 @@ def main(args):
             if args.savefigs:
                 outfile = os.path.join(args.outdir, infile.replace('.json','.pdf'))
                 compare_spectra(spectra_keV[num], [spectra[0,0,:], denoised_spectrum[0,0,:]], 
-                                [spectra_name[num], 'GS-DnCNN denoised'], args.min_keV, args.max_keV,
+                                [spectra_name[num], 'GS-DnCNN Denoised'], args.min_keV, args.max_keV,
                                 outfile=outfile, savefigs=args.savefigs, showfigs=args.showfigs,
                                 ylabel='Counts')
                 outfile = os.path.join(args.outdir, infile.replace('.json','.png'))
                 compare_spectra(spectra_keV[num], [spectra[0,0,:], denoised_spectrum[0,0,:]], 
-                                [spectra_name[num], 'GS-DnCNN denoised'], args.min_keV, args.max_keV,
+                                [spectra_name[num], 'GS-DnCNN Denoised'], args.min_keV, args.max_keV,
                                 outfile=outfile, savefigs=args.savefigs, showfigs=args.showfigs,
                                 ylabel='Counts')
 
