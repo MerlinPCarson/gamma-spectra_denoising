@@ -22,8 +22,9 @@ def compare_spectra(keV, spectra, titles, min_keV=-10, max_keV=1500, outfile=Non
     ax.set_xlim([keV[min_idx], keV[max_idx]])
     ax.grid(axis='x', which='major', alpha=0.5)
     ax.grid(axis='x', which='minor', alpha=0.2)
-
     plt.legend(fancybox=True, shadow=True, fontsize=11)
+    
+    #plt.axis('off')
     plt.tight_layout()
 
     if savefigs and outfile:

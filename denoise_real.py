@@ -18,6 +18,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from load_data_real import load_data
 from build_simulation_dataset import save_dataset
 from PaperArtifacts import compare_spectra
+from plot_utils import compare_results
 from model import DnCNN, DnCNN_Res
 from train_real import setup_device
 
@@ -164,9 +165,15 @@ def main(args):
                 psnr_denoised = psnr_of_batch(clean_spectra[0], denoised_spectrum[0])
                 titles = ['Noisy Spectrum', 'Target Spectrum', f'Denoised Spectrum ({psnr_denoised-psnr_noisy:.2f} dB)']
                 outfile = os.path.join(args.outdir, f'{num}-results.pdf')
-                compare_spectra(spectra_keV, [noisy_spectra[0,0,:], clean_spectra[0,0,:], denoised_spectrum[0,0,:]], titles, args.min_keV, args.max_keV, outfile, savefigs=True)
+                colors = ['green', 'blue', 'red']
+                linestyles = ['-.', '-', '--']
+                compare_spectra(spectra_keV, [noisy_spectra[0,0,:], clean_spectra[0,0,:], denoised_spectrum[0,0,:]], 
+                                titles, args.min_keV, args.max_keV, outfile, savefigs=True, showfigs=False, 
+                                colors=colors, linestyles=linestyles)
                 outfile = os.path.join(args.outdir, f'{num}-results.png')
-                compare_spectra(spectra_keV, [noisy_spectra[0,0,:], clean_spectra[0,0,:], denoised_spectrum[0,0,:]], titles, args.min_keV, args.max_keV, outfile, savefigs=True)
+                compare_spectra(spectra_keV, [noisy_spectra[0,0,:], clean_spectra[0,0,:], denoised_spectrum[0,0,:]], 
+                                titles, args.min_keV, args.max_keV, outfile, savefigs=True, showfigs=False, 
+                                colors=colors, linestyles=linestyles)
 
     # save denoised data to file, currently only supports entire dataset
     if args.all:
