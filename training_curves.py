@@ -24,36 +24,38 @@ def plot_curves(history, lr_rates, outfile):
     history['train'][0] = min(history['train'][0], top)
 
     ax[0].plot(dims, history['train'], label='training set', color='blue')
-    ax[0].set_xlabel('epoch', fontsize=18, fontweight='bold', fontname='cmtt10')
-    ax[0].set_ylabel('loss', fontsize=18, fontweight='bold', fontname='cmtt10')
-    ax[0].set_xticks(np.arange(0, len(history['val']), 5))
-    ax[0].set_xticks(np.arange(0, len(history['val']), 1), minor=True)
+    ax[0].set_xlabel('Epoch', fontsize=24, fontweight='bold', fontname='cmtt10')
+    ax[0].set_ylabel('Loss', fontsize=24, fontweight='bold', fontname='cmtt10')
+    ax[0].set_xticks(np.arange(0, len(history['val']), 10))
+    ax[0].set_xticks(np.arange(0, len(history['val']), 2), minor=True)
     ax[0].grid(axis='x', which='major', alpha=0.5)
     ax[0].grid(axis='x', which='minor', alpha=0.2)
     ax[0].grid(axis='y', which='major', alpha=0.5)
     ax[0].grid(axis='y', which='minor', alpha=0.2)
+    ax[0].tick_params(axis='both', labelsize=12)
 
     for i in range(len(lr_rates[0])):
         # offset by since epoch 1 in index 0
         ax[0].axvline(lr_rates[1][i]+1, linestyle='--', color=cycle_colors[i], label=f'learning rate: {lr_rates[0][i]:.0E}')
 
-    ax[0].legend(fancybox=True, shadow=True, fontsize=12, loc='upper right', framealpha=0.8)
+    ax[0].legend(fancybox=True, shadow=True, fontsize=16, loc='upper right', framealpha=0.8)
 
     ax[1].plot(dims, history['psnr'], label='validation set', color='red')
-    ax[1].set_xlabel('epoch', fontsize=18, fontweight='bold', fontname='cmtt10')
-    ax[1].set_ylabel('PSNR', fontsize=18, fontweight='bold', fontname='cmtt10')
-    ax[1].set_xticks(np.arange(0, len(history['psnr']), 5))
-    ax[1].set_xticks(np.arange(0, len(history['psnr']), 1), minor=True)
+    ax[1].set_xlabel('Epoch', fontsize=24, fontweight='bold', fontname='cmtt10')
+    ax[1].set_ylabel('PSNR', fontsize=24, fontweight='bold', fontname='cmtt10')
+    ax[1].set_xticks(np.arange(0, len(history['psnr']), 10))
+    ax[1].set_xticks(np.arange(0, len(history['psnr']), 2), minor=True)
     ax[1].grid(axis='x', which='major', alpha=0.5)
     ax[1].grid(axis='x', which='minor', alpha=0.2)
     ax[1].grid(axis='y', which='major', alpha=0.5)
     ax[1].grid(axis='y', which='minor', alpha=0.2)
+    ax[1].tick_params(axis='both', labelsize=12)
 
     for i in range(len(lr_rates[0])):
         # offset by since epoch 1 in index 0
         ax[1].axvline(lr_rates[1][i]+1, linestyle='--', color=cycle_colors[i], label=f'learning rate: {lr_rates[0][i]:.0E}')
 
-    ax[1].legend(fancybox=True, shadow=True, fontsize=12, loc='lower right', framealpha=0.8)
+    ax[1].legend(fancybox=True, shadow=True, fontsize=16, loc='lower right', framealpha=0.8)
 
     # make image full screen
     fig = plt.gcf()
