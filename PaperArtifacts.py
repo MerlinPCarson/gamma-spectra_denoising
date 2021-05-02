@@ -127,13 +127,14 @@ def plot_spectra_snrs(spec1, spec2, min_keV, max_keV, outdir):
     for i in range(len(ax)):
         ax[i].set_xlabel('Energy (keV)', fontsize=14, fontweight='bold', fontname='cmtt10')
         ax[i].set_ylabel('Counts', fontsize=14, fontweight='bold', fontname='cmtt10')
-        ax[i].set_xticks(np.arange(min_keV, max_keV, 100))
-        ax[i].set_xticks(np.arange(min_keV, max_keV, 20), minor=True)
+        ax[i].set_xticks(np.arange(min_keV, max_keV, 200))
+        ax[i].set_xticks(np.arange(min_keV, max_keV, 50), minor=True)
         ax[i].set_xlim([min_keV, max_keV])
         ax[i].grid(axis='x', which='major', alpha=0.5)
         ax[i].grid(axis='x', which='minor', alpha=0.2)
         ax[i].legend(fancybox=True, shadow=True, fontsize=12)
 
+    ax[0].set_ylabel('Counts', fontsize=14, fontweight='bold', fontname='cmtt10', labelpad=17)
     #fig.set_size_inches(8.5, 11)
     plt.tight_layout()
     plt.savefig(outfile, format='pdf', dpi=300)
@@ -174,75 +175,75 @@ def parse_args():
 def main(args):
     start = time.time()
 
-    compton = pickle.load(open(args.temp_compton, 'rb'))
-    nocompton = pickle.load(open(args.temp_compton.replace('.npy','_nocompton.npy'), 'rb'))
+#    compton = pickle.load(open(args.temp_compton, 'rb'))
+#    nocompton = pickle.load(open(args.temp_compton.replace('.npy','_nocompton.npy'), 'rb'))
+#
+#    # plot a template 
+#    titles = ['SSLCA template without Compton', 'SSLCA template with Compton']
+#    outfile = os.path.join(args.outdir, 'template_compton.pdf')
+#    show_spectra(compton['keV'], [nocompton['intensity'], compton['intensity']], '152Eu', titles, args.min_keV, args.max_keV, outfile)
+#
+#    # load configuration parameters
+#    with open(args.configfile, 'r') as cfile:
+#        config = json.load(cfile)['DETECTORS'][args.dettype.upper()]
+#
+#    # load a radionuclide template
+#    keV, hits, rn, = load_spectrum(args.nndc_temp, True)
+#
+#    # plot a raw template 
+#    titles = ['NNDC gamma-ray table']
+#    outfile = os.path.join(args.outdir, 'template.pdf')
+#    show_spectra(keV, [hits], rn, titles, args.min_keV, args.max_keV, outfile)
+#
+#    # apply efficiency
+#    hits_eff = [nai_effeciency(eV)*counts for eV, counts in zip(keV, hits)]
+#
+#    # compare template pre/post efficiency 
+#    titles = ['NNDC gamma-ray table', 'table scaled for efficiency']
+#    outfile = os.path.join(args.outdir, 'compare_efficiency.pdf')
+#    show_spectra(keV, [hits, hits_eff], rn, titles, args.min_keV, args.max_keV, outfile)
+#
+#    # apply Gaussian broadening
+#    hits_broad = np.array(data_smooth(keV, hits, **config['SMOOTH_PARAMS']))
+#    hits_broad /= np.sqrt(np.sum(hits_broad**2))
+#
+#    # compare template pre/post efficiency 
+#    titles = ['table scaled for efficiency', 'with Gaussian broadening']
+#    outfile = os.path.join(args.outdir, 'compare_eff_broad.pdf')
+#    show_spectra(keV, [hits_eff, hits_broad], rn, titles, args.min_keV, args.max_keV, outfile)
 
-    # plot a template 
-    titles = ['SSLCA template without Compton', 'SSLCA template with Compton']
-    outfile = os.path.join(args.outdir, 'template_compton.pdf')
-    show_spectra(compton['keV'], [nocompton['intensity'], compton['intensity']], '152Eu', titles, args.min_keV, args.max_keV, outfile)
+#    # plot 2 spectra and associated SNRs
+#    plot_spectra_snrs(args.lowsnr_spec, args.highsnr_spec, 0, 1500, args.outdir)
 
-    # load configuration parameters
-    with open(args.configfile, 'r') as cfile:
-        config = json.load(cfile)['DETECTORS'][args.dettype.upper()]
-
-    # load a radionuclide template
-    keV, hits, rn, = load_spectrum(args.nndc_temp, True)
-
-    # plot a raw template 
-    titles = ['NNDC gamma-ray table']
-    outfile = os.path.join(args.outdir, 'template.pdf')
-    show_spectra(keV, [hits], rn, titles, args.min_keV, args.max_keV, outfile)
-
-    # apply efficiency
-    hits_eff = [nai_effeciency(eV)*counts for eV, counts in zip(keV, hits)]
-
-    # compare template pre/post efficiency 
-    titles = ['NNDC gamma-ray table', 'table scaled for efficiency']
-    outfile = os.path.join(args.outdir, 'compare_efficiency.pdf')
-    show_spectra(keV, [hits, hits_eff], rn, titles, args.min_keV, args.max_keV, outfile)
-
-    # apply Gaussian broadening
-    hits_broad = np.array(data_smooth(keV, hits, **config['SMOOTH_PARAMS']))
-    hits_broad /= np.sqrt(np.sum(hits_broad**2))
-
-    # compare template pre/post efficiency 
-    titles = ['table scaled for efficiency', 'with Gaussian broadening']
-    outfile = os.path.join(args.outdir, 'compare_eff_broad.pdf')
-    show_spectra(keV, [hits_eff, hits_broad], rn, titles, args.min_keV, args.max_keV, outfile)
-
-    # plot 2 spectra and associated SNRs
-    plot_spectra_snrs(args.lowsnr_spec, args.highsnr_spec, 0, 1500, args.outdir)
-
-    # compare PE and Compton in MCNP simulations 
-    # load PE intensity 
-    keV, hits_pe, rn, = load_spectrum(args.nndc_temp, normalize=True)
-    # load Compton only intensity 
-    _, hits_comp, rn, = load_spectrum(args.nndc_temp_compton, normalize=True)
-
-    titles = ['photoelectric', 'Compton']
-    outfile = os.path.join(args.outdir, 'compare_compton_pe.pdf')
-    show_spectra(keV, [hits_pe, hits_comp], rn, titles, args.min_keV, args.max_keV, outfile)
-
-    # compare broadened PE and Compton in MCNP simulations 
-    # load PE intensity 
-    keV, hits_pe, rn, = load_spectrum(args.nndc_preproc_temp, normalize=False)
-    # load Compton only intensity 
-    _, hits_comp, rn, = load_spectrum(args.nndc_preproc_temp_compton, normalize=False)
-
-    titles = ['photoelectric', 'Compton']
-    outfile = os.path.join(args.outdir, 'compare_compton_pe_broad.pdf')
-    show_spectra(keV, [hits_pe, hits_comp], rn, titles, args.min_keV, args.max_keV, outfile)
-
-    # compare broadened PE and Compton in MCNP simulations 
-    # load PE intensity 
-    keV, hits_pe, rn, = load_spectrum(args.spec_augment, normalize=False)
-    hits_pe_left = np.roll(hits_pe, -15)
-    hits_pe_right = np.roll(hits_pe, 15)
-
-    titles = ['spectrum', 'left shifted', 'right shifted']
-    outfile = os.path.join(args.outdir, 'shift_augment.pdf')
-    show_spectra(keV, [hits_pe, hits_pe_left, hits_pe_right], rn, titles, args.min_keV, args.max_keV, outfile)
+#    # compare PE and Compton in MCNP simulations 
+#    # load PE intensity 
+#    keV, hits_pe, rn, = load_spectrum(args.nndc_temp, normalize=True)
+#    # load Compton only intensity 
+#    _, hits_comp, rn, = load_spectrum(args.nndc_temp_compton, normalize=True)
+#
+#    titles = ['photoelectric', 'Compton']
+#    outfile = os.path.join(args.outdir, 'compare_compton_pe.pdf')
+#    show_spectra(keV, [hits_pe, hits_comp], rn, titles, args.min_keV, args.max_keV, outfile)
+#
+#    # compare broadened PE and Compton in MCNP simulations 
+#    # load PE intensity 
+#    keV, hits_pe, rn, = load_spectrum(args.nndc_preproc_temp, normalize=False)
+#    # load Compton only intensity 
+#    _, hits_comp, rn, = load_spectrum(args.nndc_preproc_temp_compton, normalize=False)
+#
+#    titles = ['photoelectric', 'Compton']
+#    outfile = os.path.join(args.outdir, 'compare_compton_pe_broad.pdf')
+#    show_spectra(keV, [hits_pe, hits_comp], rn, titles, args.min_keV, args.max_keV, outfile)
+#
+#    # compare broadened PE and Compton in MCNP simulations 
+#    # load PE intensity 
+#    keV, hits_pe, rn, = load_spectrum(args.spec_augment, normalize=False)
+#    hits_pe_left = np.roll(hits_pe, -15)
+#    hits_pe_right = np.roll(hits_pe, 15)
+#
+#    titles = ['spectrum', 'left shifted', 'right shifted']
+#    outfile = os.path.join(args.outdir, 'shift_augment.pdf')
+#    show_spectra(keV, [hits_pe, hits_pe_left, hits_pe_right], rn, titles, args.min_keV, args.max_keV, outfile)
 
     print(f'Script completed in {time.time()-start:.2f} secs')
 
