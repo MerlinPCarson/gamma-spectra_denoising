@@ -25,8 +25,8 @@ def compare_spectra(keV, spectra, titles, min_keV=0, max_keV=1500, outfile=None,
         ax[i].plot(keV[min_idx:max_idx], spectrum[min_idx:max_idx], color=color, label=f'{title}')
     
         #ax[i] = plt.gca()
-        ax[i].set_xlabel('Energy (keV)', fontsize=24, fontweight='bold', fontname='cmtt10')
-        ax[i].set_ylabel('Intensity', fontsize=24, fontweight='bold', fontname='cmtt10')
+        ax[i].set_xlabel('Energy (keV)', fontsize=16, fontweight='bold', fontname='cmtt10')
+        ax[i].set_ylabel('Intensity', fontsize=16, fontweight='bold', fontname='cmtt10')
         ax[i].set_xticks(np.arange(keV[min_idx], keV[max_idx], 100))
         ax[i].set_xticks(np.arange(keV[min_idx], keV[max_idx], 20), minor=True)
         ax[i].set_xlim([min_keV, max_keV])
