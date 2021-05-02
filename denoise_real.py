@@ -18,7 +18,6 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from load_data_real import load_data
 from build_simulation_dataset import save_dataset
 from PaperArtifacts import compare_spectra
-from plot_utils import compare_results
 from model import DnCNN, DnCNN_Res
 from train_real import setup_device
 
@@ -163,7 +162,11 @@ def main(args):
             if args.savefigs:
                 psnr_noisy = psnr_of_batch(clean_spectra[0], noisy_spectra[0])
                 psnr_denoised = psnr_of_batch(clean_spectra[0], denoised_spectrum[0])
-                titles = ['Noisy Spectrum', 'Target Spectrum', f'GS-DnCNN Denoised (+{psnr_denoised-psnr_noisy:.2f} dB)']
+                psnr_enhancement = psnr_denoised-psnr_noisy
+                sign = '+'
+                if psnr_enhancement < 0:
+                    sign = ''
+                titles = ['Noisy Spectrum', 'Target Spectrum', f'GS-DnCNN Denoised ({sign}{psnr_enhancement:.2f} dB)']
                 outfile = os.path.join(args.outdir, f'{num}-results.pdf')
                 colors = ['green', 'blue', 'red']
                 linestyles = ['-.', '-', '--']
@@ -195,4 +198,3 @@ def main(args):
 if __name__ == '__main__':
     args = parse_args()
     sys.exit(main(args))
-
