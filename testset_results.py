@@ -11,8 +11,7 @@ from spectra_utils import split_radionuclide_name
 
 def plot_accuracy(model, SSLCA, SSLCA_BS, outdir):
 
-    #plt.rcParams["font.family"] = "cmtt10"
-    plt.rcParams["font.size"] = 18 
+    
     labels = ['raw spectrum', 'background subtraction', 'GS-DnCNN denoised']
     bars = [SSLCA['total_correct']/model['num']*100, SSLCA_BS['total_correct']/SSLCA_BS['num']*100, model['total_correct']/model['num']*100]
     styles = {'colors': ['red', 'green', 'blue'],
@@ -22,14 +21,20 @@ def plot_accuracy(model, SSLCA, SSLCA_BS, outdir):
         plt.bar(labels[model], bars[model], edgecolor='black', color=styles['colors'][model], hatch=styles['hatch'][model], label=labels[model], zorder=3)
 
     plt.xticks([0,1,2], ['', '', ''])
-    plt.grid(zorder=0)
+    #plt.grid(zorder=0)
     plt.legend(fancybox=True, shadow=True, fontsize=11, loc='upper right', framealpha=0.6)
-    plt.ylabel('Accuracy (%)', fontsize=18, fontweight='bold', font='cmtt10')
-    plt.xlabel('SSLCA-Results', fontsize=18, fontweight='bold', font='cmtt10')
-    plt.tight_layout()
+    plt.ylabel('Accuracy (%)', font='cmtt10', fontsize=16, fontweight='bold')
+    plt.xlabel('SSLCA-Results', font='cmtt10', fontsize=16, fontweight='bold')
 
-    #fig = plt.gcf()
-    #fig.set_size_inches(18, 11)
+    bottom = 0.0
+    top = 75.0
+    ax = plt.gca()
+    ax.set_yticks(np.arange(bottom, top, 10))
+    ax.set_yticks(np.arange(bottom, top, 2), minor=True)
+    ax.grid(axis='y', which='major', alpha=0.5)
+    ax.grid(axis='y', which='minor', alpha=0.2)
+
+    plt.tight_layout()
 
     plt.savefig(os.path.join(outdir, 'results.pdf'),format='pdf', dpi=300)
     plt.show()
@@ -61,16 +66,126 @@ def plot_accuracy_RN(model, SSLCA, SSLCA_BS, outdir):
                 edgecolor='black', hatch=styles['hatch'][idx], label=models[idx], zorder=3)
 
     plt.legend(fancybox=True, shadow=True, fontsize=11, loc='upper right')
-    plt.ylabel('Accuracy (%)', fontsize=18, fontweight='bold', font='cmtt10')
-    plt.xlabel('SSLCA-Results', fontsize=18, fontweight='bold', font='cmtt10')
-    plt.xticks([r + barWidth for r in range(len(labels))], labels, fontsize=12, fontname='cmmi10')
-    plt.grid(zorder=0)
+    plt.ylabel('Accuracy (%)', font='cmtt10', fontsize=16, fontweight='bold')
+    plt.xlabel('SSLCA-Results', font='cmtt10', fontsize=16, fontweight='bold')
+    plt.xticks([r + barWidth for r in range(len(labels))], labels, fontsize=12, fontname='cmtt10')
+
+    bottom = 0.0
+    top = 101.0
+    ax = plt.gca()
+    ax.set_yticks(np.arange(bottom, top, 10))
+    ax.set_yticks(np.arange(bottom, top, 2), minor=True)
+    ax.grid(axis='y', which='major', alpha=0.5)
+    ax.grid(axis='y', which='minor', alpha=0.2)
+
     plt.tight_layout()
 
-    #fig = plt.gcf()
-    #fig.set_size_inches(18, 11)
-
+    plt.savefig(os.path.join(outdir, 'resultsRN.pdf'),format='pdf', dpi=300)
     plt.show()
+
+def plot_accuracy_SNRS(model, SSLCA, SSLCA_BS, outdir):
+
+    fig, ax = plt.subplots(3, 1)
+
+    bottom, top = plt.ylim()
+    bottom = -20.0
+    top = 25.1
+
+    #x1 = np.arange(1,len(model['incorrect_snrs'])+1)
+    #x2 = np.arange(len(model['incorrect_snrs'])+1, len(model['incorrect_snrs'])+len(model['correct_snrs'])+1)
+
+    #ax[2].scatter(x1, sorted(model['incorrect_snrs']), color='red', marker='x', label='incorrect classifications')
+    #ax[2].scatter(x2, sorted(model['correct_snrs']), color='blue', marker='+', label='correct classifications')
+
+    x1, y1, x2, y2 = get_snr_scatter(model['incorrect_snrs'], model['correct_snrs'])
+    ax[2].scatter(x1, y1, color='red', marker='x', label='SSLCA incorrect classifications')
+    ax[2].scatter(x2, y2, color='blue', marker='+', label='SSLCA correct classifications')
+
+    ax[2].set_xticks(np.arange(0, len(x1)+len(x2)+1, 5))
+    ax[2].set_xticks(np.arange(0, len(x1)+len(x2)+1, 1), minor=True)
+    ax[2].set_yticks(np.arange(bottom, top, 10))
+    ax[2].set_yticks(np.arange(bottom, top, 2), minor=True)
+    ax[2].grid(axis='y', which='major', alpha=0.5)
+    ax[2].grid(axis='y', which='minor', alpha=0.2)
+    ax[2].grid(axis='x', which='major', alpha=0.5)
+    ax[2].grid(axis='x', which='minor', alpha=0.2)
+
+    ax[2].set_ylabel('SNR (dB)', font='cmtt10', fontsize=16, fontweight='bold')
+    ax[2].set_xlabel('Testset Spectra (GS-DnCNN Denoised)', font='cmtt10', fontsize=16, fontweight='bold')
+    ax[2].legend(fancybox=True, shadow=True, fontsize=11, loc='upper left')
+
+    #x1 = np.arange(1,len(SSLCA['incorrect_snrs'])+1)
+    #x2 = np.arange(len(SSLCA['incorrect_snrs'])+1, len(SSLCA['incorrect_snrs'])+len(SSLCA['correct_snrs'])+1)
+
+    #ax[0].scatter(x1, sorted(SSLCA['incorrect_snrs']), color='red', marker='x', label='SSLCA incorrect classifications')
+    #ax[0].scatter(x2, sorted(SSLCA['correct_snrs']), color='blue', marker='+', label='SSLCA correct classifications')
+
+    x1, y1, x2, y2 = get_snr_scatter(SSLCA['incorrect_snrs'], SSLCA['correct_snrs'])
+    ax[0].scatter(x1, y1, color='red', marker='x', label='SSLCA incorrect classifications')
+    ax[0].scatter(x2, y2, color='blue', marker='+', label='SSLCA correct classifications')
+
+    ax[0].set_xticks(np.arange(0, len(x1)+len(x2)+1, 5))
+    ax[0].set_xticks(np.arange(0, len(x1)+len(x2)+1, 1), minor=True)
+    ax[0].set_yticks(np.arange(bottom, top, 10))
+    ax[0].set_yticks(np.arange(bottom, top, 2), minor=True)
+    ax[0].grid(axis='y', which='major', alpha=0.5)
+    ax[0].grid(axis='y', which='minor', alpha=0.2)
+    ax[0].grid(axis='x', which='major', alpha=0.5)
+    ax[0].grid(axis='x', which='minor', alpha=0.2)
+
+    ax[0].set_ylabel('SNR (dB)', font='cmtt10', fontsize=16, fontweight='bold')
+    ax[0].set_xlabel('Testset Spectra (Raw Spectrum)', font='cmtt10', fontsize=16, fontweight='bold')
+    ax[0].legend(fancybox=True, shadow=True, fontsize=11, loc='upper left')
+
+    #x1 = np.arange(1,len(SSLCA_BS['incorrect_snrs'])+1)
+    #x2 = np.arange(len(SSLCA_BS['incorrect_snrs'])+1, len(SSLCA_BS['incorrect_snrs'])+len(SSLCA_BS['correct_snrs'])+1)
+
+    #ax[1].scatter(x1, sorted(SSLCA_BS['incorrect_snrs']), color='red', marker='x', label='SSLCA incorrect classifications')
+    #ax[1].scatter(x2, sorted(SSLCA_BS['correct_snrs']), color='blue', marker='+', label='SSLCA correct classifications')
+
+    x1, y1, x2, y2 = get_snr_scatter(SSLCA_BS['incorrect_snrs'], SSLCA_BS['correct_snrs'])
+    ax[1].scatter(x1, y1, color='red', marker='x', label='SSLCA incorrect classifications')
+    ax[1].scatter(x2, y2, color='blue', marker='+', label='SSLCA correct classifications')
+
+    ax[1].set_xticks(np.arange(0, len(x1)+len(x2)+1, 5))
+    ax[1].set_xticks(np.arange(0, len(x1)+len(x2)+1, 1), minor=True)
+    ax[1].set_yticks(np.arange(bottom, top, 10))
+    ax[1].set_yticks(np.arange(bottom, top, 2), minor=True)
+    ax[1].grid(axis='y', which='major', alpha=0.5)
+    ax[1].grid(axis='y', which='minor', alpha=0.2)
+    ax[1].grid(axis='x', which='major', alpha=0.5)
+    ax[1].grid(axis='x', which='minor', alpha=0.2)
+
+    ax[1].set_ylabel('SNR (dB)', font='cmtt10', fontsize=16, fontweight='bold')
+    ax[1].set_xlabel('Testset Spectra (Background Subtracted)', font='cmtt10', fontsize=16, fontweight='bold')
+    ax[1].legend(fancybox=True, shadow=True, fontsize=11, loc='upper left')
+
+    plt.tight_layout()
+    fig.set_size_inches(11, 8.5)
+    
+    plt.savefig(os.path.join(outdir, 'resultsSNR.pdf'),format='pdf', dpi=300)
+    plt.show()
+
+def get_snr_scatter(incorrect_snrs, correct_snrs):
+    snrs = np.array(incorrect_snrs + correct_snrs)
+    target = np.array([0] * len(incorrect_snrs) + [1] * len(correct_snrs))
+    order = snrs.argsort(axis=0)
+    snrs = snrs[order]
+    target = target[order]
+
+    x1 = []
+    y1 = []
+    x2 = [] 
+    y2 = []
+    for i in range(len(snrs)):
+        if target[i] == 0:
+            x1.append(i)
+            y1.append(snrs[i])
+        else:
+            x2.append(i)
+            y2.append(snrs[i])
+
+    return x1, y1, x2, y2
 
 def get_model_RN_results(model):
 
@@ -199,14 +314,6 @@ def get_accuracy_RN(results):
 
     results['RN'] = rns
 
-#def get_accuracy_RN(model, SSLCA, SSLCA_BS):
-#
-#    model_accs_RN = rn_results(model) 
-#    SSLCA_accs_RN = rn_results(SSLCA) 
-#    SSLCA_BS_accs_RN = rn_results(SSLCA_BS) 
-#
-#def rn_results(results)
-
 def get_snrs(results):
 
     correct_snrs = []
@@ -233,7 +340,7 @@ def plot_results(model, SSLCA, SSLCA_BS, outdir):
 
     plot_accuracy_RN(model, SSLCA, SSLCA_BS, outdir)
 
-    #plot_accuracy_SNRS(model, SSLCA, SSLCA_BS, outdir)
+    plot_accuracy_SNRS(model, SSLCA, SSLCA_BS, outdir)
 
 
 def parse_args():
