@@ -67,8 +67,8 @@ def main(args):
     print('Loading spectra to denoise')
     test_data, test_files = load_spectra(args.spectra)
 
-    spectra = np.expand_dims(np.array(test_data['hits']), axis=1)
-    spectra_keV = np.array(test_data['keV'])
+    spectra = np.expand_dims(np.array(test_data['hits'], dtype=np.float32), axis=1)
+    spectra_keV = np.array(test_data['keV'], dtype=np.float32)
     spectra_name = [os.path.basename(test_data['spec_name'][i]).replace('.json', '') for i in range(len(test_data['spec_name']))]
 
     print(spectra.shape)
