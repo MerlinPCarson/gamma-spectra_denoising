@@ -23,13 +23,10 @@ class DnCNN(nn.Module):
         self.layers = []
         self.layers.append(nn.Conv1d(in_channels=num_channels, out_channels=num_filters, stride=stride, kernel_size=kernel_size, padding=padding, bias=False))
         self.layers.append(nn.LeakyReLU())
-        #self.layers.append(nn.AvgPool1d(2))
         for i in range(num_layers-2):
             self.layers.append(nn.Conv1d(in_channels=num_filters, dilation=dilation_rate, out_channels=num_filters, stride=stride, kernel_size=kernel_size, padding=padding_d, bias=False))
             self.layers.append(nn.BatchNorm1d(num_filters))
             self.layers.append(nn.LeakyReLU())
-        #self.layers.append(nn.Upsample(size=4233, mode='linear'))
-        #self.layers.append(nn.Upsample(size=8192, mode='linear'))
         self.layers.append(nn.Conv1d(in_channels=num_filters, out_channels=num_channels, stride=stride, kernel_size=kernel_size, padding=padding, bias=False))
         self.model = nn.ModuleList(self.layers)
         init_weights(self.model)
@@ -38,6 +35,41 @@ class DnCNN(nn.Module):
         for layer in self.model:
             x = layer(x)
         return x 
+
+class DnCNN_AE(nn.Module):
+    def __init__(self, num_channels=1, num_layers=18, kernel_size=3, stride=1, num_filters=64, dilation_rate=3):
+        super(DnCNN_AE, self).__init__()
+
+        padding = 0
+        padding_d = 0
+        #padding = int((kernel_size-1)/2)
+        #padding_d = math.floor((kernel_size + (kernel_size-1) * (dilation_rate-1))/2)
+
+        assert ((num_layers-2) % 2) == 0, 'Must be even number of layers to attain correct output size!'
+
+        # create module list
+        self.layers = []
+        self.layers.append(nn.Conv1d(in_channels=num_channels, out_channels=num_filters, stride=stride, kernel_size=kernel_size, padding=padding, bias=False))
+        self.layers.append(nn.LeakyReLU())
+        # dimensionality reduction
+        for i in range((num_layers-2)//2):
+            self.layers.append(nn.Conv1d(in_channels=num_filters, dilation=dilation_rate, out_channels=num_filters, stride=stride, kernel_size=kernel_size, padding=padding_d, bias=False))
+            self.layers.append(nn.BatchNorm1d(num_filters))
+            self.layers.append(nn.LeakyReLU())
+        # dimensionality increase 
+        for i in range((num_layers-2)//2):
+            self.layers.append(nn.ConvTranspose1d(in_channels=num_filters, dilation=dilation_rate, out_channels=num_filters, stride=stride, kernel_size=kernel_size, padding=padding_d, bias=False))
+            self.layers.append(nn.BatchNorm1d(num_filters))
+            self.layers.append(nn.LeakyReLU())
+        self.layers.append(nn.ConvTranspose1d(in_channels=num_filters, out_channels=num_channels, stride=stride, kernel_size=kernel_size, padding=padding, bias=False))
+        self.model = nn.ModuleList(self.layers)
+        init_weights(self.model)
+
+    def forward(self, x):
+        for layer in self.model:
+            x = layer(x)
+        return x 
+
 
 
 class DnCNN_Res(nn.Module):
