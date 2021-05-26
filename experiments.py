@@ -28,15 +28,17 @@ def create_grid():
     #l1_params = [start * 10**x for x in range(num_steps)]
     #l1_params.insert(0, 0.0)
     #l1_params = [0.0] 
+    #l1_params = np.linspace(1e-7,1e-6,5)
     #grid['l1'] = l1_params
 
     #l2_params = [start * 10**x for x in range(num_steps)]
     #l2_params.insert(0, 0.0)
-    l2_params = np.arange(0, 1.55, 0.25)
-    grid['l2'] = l2_params
+    #l2_params = np.arange(0, 1.55, 0.25)
+    #l2_params = np.linspace(0.5,1.5,5)
+    #grid['l2'] = l2_params
 
     # layer sizes
-    #width_params = [16,32,64,128]
+    #width_params = [16,32,48,64]
     #grid['num_filters'] = width_params
 
     #depth_params = [5,10,15,20]
@@ -44,9 +46,12 @@ def create_grid():
 
     # training params 
     #lr_params = [0.1, 0.01, 0.001, 0.0001]
-    #grid['lr'] = lr_params
+    lr_params = np.linspace(0.0005, 0.005, 4)
+    grid['lr'] = lr_params
 
-    batch_params = [32,64]
+    #batch_params = [32,64]
+    #batch_params = np.linspace(32, 128, 4, dtype='int')
+    batch_params = [16,32,48,64]
     grid['batch_size'] = batch_params
 
     return grid

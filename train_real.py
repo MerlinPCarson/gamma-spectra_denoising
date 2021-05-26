@@ -9,10 +9,10 @@ import numpy as np
 import torch
 # makes cuDNN deterministic
 torch.backends.cudnn.benchmark = False
-try:    # PyTorch 1.8
-    torch.use_deterministic_algorithms(True)
-except: # PyTorch 1.7
-    torch.set_deterministic(True)
+#try:    # PyTorch 1.8
+#    torch.use_deterministic_algorithms(True)
+#except: # PyTorch 1.7
+#    torch.set_deterministic(True)
 
 from torch.utils.data import DataLoader, TensorDataset
 from torch.autograd import Variable
@@ -90,7 +90,7 @@ def create_data_loaders(args):
 
     # if target is noise
     if args.gennoise:
-        noise = training_data['noise']
+        noise = training_data['noise'][:, :max_idx]
         #assert noisy_spectra.shape == noise.shape, 'Mismatch between shapes of training and target data'
         # add noise to target data since noise will be the target not the clean spectra, still need clean data for PSNR
         target_spectra = np.stack((target_spectra,noise), axis=1)
@@ -134,7 +134,8 @@ def build_model(args):
     # create model
     if not args.res:
         model = DnCNN(num_channels=args.num_channels, num_layers=args.num_layers, 
-                      kernel_size=args.filter_size,  num_filters=args.num_filters).to(args.device) 
+                      kernel_size=args.filter_size,  num_filters=args.num_filters, 
+                      dilation_rate=args.dilation_rate).to(args.device)
     else:
         model = DnCNN_Res(num_channels=args.num_channels, num_layers=args.num_layers, 
                       kernel_size=args.filter_size, num_filters=args.num_filters,
@@ -308,16 +309,16 @@ def parse_args():
     parser.add_argument("-gn", "--gennoise", help="use noise as target", default=False, action="store_true")
     parser.add_argument('--det_type', type=str, default='NaI', help='detector type to train {HPGe, NaI, CZT}')
     parser.add_argument('--train_set', type=str, default='data/training.h5', help='h5 file with training vectors')
-    parser.add_argument('--batch_size', type=int, default=64, help='batch size for training')
+    parser.add_argument('--batch_size', type=int, default=32, help='batch size for training')
     parser.add_argument('--epochs', type=int, default=1000, help='number of epochs')
     parser.add_argument('--patience', type=int, default=10, help='number of epochs of no improvment before early stopping')
     parser.add_argument('--max_keV', type=float, default=1500, help='maximum keV used for input features')
-    parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
-    parser.add_argument('--l2', type=float, default=0.0, help='L2 coefficient')
-    parser.add_argument('--l1', type=float, default=0.0, help='L1 coefficient')
+    parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
+    parser.add_argument('--l2', type=float, default=1.0, help='L2 coefficient')
+    parser.add_argument('--l1', type=float, default=7.75e-7, help='L1 coefficient')
     parser.add_argument('--lr_decay', type=float, default=0.94, help='learning rate decay factor')
-    parser.add_argument('--num_layers', type=int, default=5, help='number of CNN layers in network')
-    parser.add_argument('--num_filters', type=int, default=16, help='number of filters per CNN layer')
+    parser.add_argument('--num_layers', type=int, default=20, help='number of CNN layers in network')
+    parser.add_argument('--num_filters', type=int, default=32, help='number of filters per CNN layer')
     parser.add_argument('--filter_size', type=int, default=3, help='size of filter for CNN layers')
     parser.add_argument('--dilation_rate', type=int, default=3, help='dilation rate for denoising blocks')
     parser.add_argument('--res', default=False, help='use model with residual blocks', action='store_true')
