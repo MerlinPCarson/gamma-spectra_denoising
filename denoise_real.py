@@ -18,7 +18,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from load_data_real import load_data
 from build_simulation_dataset import save_dataset
 from PaperArtifacts import compare_spectra
-from model import DnCNN, DnCNN_Res
+from model import DnCNN, DnCNN_Res, DnCNN_AE
 from train_real import setup_device
 
 from sklearn.model_selection import train_test_split
@@ -108,6 +108,10 @@ def main(args):
     # create and load model
     if params['model_name'] == 'DnCNN':
         model = DnCNN(num_channels=params['num_channels'], num_layers=params['num_layers'], 
+                      kernel_size=params['kernel_size'], num_filters=params['num_filters'],
+                      dilation_rate=params['dilation_rate']).to(args.device)
+    elif params['model_name'] == 'DnCNN-AE':
+        model = DnCNN_AE(num_channels=params['num_channels'], num_layers=params['num_layers'], 
                       kernel_size=params['kernel_size'], num_filters=params['num_filters'],
                       dilation_rate=params['dilation_rate']).to(args.device)
     elif params['model_name'] == 'DnCNN-res':

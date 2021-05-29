@@ -18,7 +18,7 @@ def load_spectrum(specfile):
 
     return spectrum['KEV'], spectrum['HIT']
 
-def load_spectra(spectra):
+def load_spectra(spectra, smooth=False):
 
     test_data = {"keV": [], "hits": [], "spec_name": []}
 
@@ -29,11 +29,64 @@ def load_spectra(spectra):
     else:
         sys.exit('Spectra path not found')
 
+    # remove background file if it exists
+    test_files = [spec for spec in test_files if 'background.json' not in spec] 
+
+    print(test_files)
     for spectrum in test_files:
         keV, hits = load_spectrum(spectrum)
         test_data["keV"].append(keV)
+
+        if smooth:
+            print(f'smoothing spectrum {spectrum}')
+            # single window
+            windowsize = 10 
+            hits = np.convolve(hits, np.ones((windowsize,))/windowsize, mode='same').tolist()
+
+            # 3 smoothing windows
+            #lowKev1 = np.searchsorted(keV, 450)
+            #lowKev2 = np.searchsorted(keV, 750)
+            #windowsize = 10 
+            #hits[:lowKev1] = np.convolve(hits[:lowKev1], np.ones((windowsize,))/windowsize, mode='same').tolist()
+            #windowsize = 30 
+            #hits[lowKev1:lowKev2] = np.convolve(hits[lowKev1:lowKev2], np.ones((windowsize,))/windowsize, mode='same').tolist()
+            #windowsize = 40 
+            #hits[lowKev2:] = np.convolve(hits[lowKev2:], np.ones((windowsize,))/windowsize, mode='same').tolist()
+
+            # 4 smoothing windows
+            #lowKev1 = np.searchsorted(keV, 450)
+            #windowsize = 10 
+            #hits[:lowKev1] = np.convolve(hits[:lowKev1], np.ones((windowsize,))/windowsize, mode='same').tolist()
+            #lowKev2 = np.searchsorted(keV, 550)
+            #windowsize = 20 
+            #hits[lowKev1:lowKev2] = np.convolve(hits[lowKev1:lowKev2], np.ones((windowsize,))/windowsize, mode='same').tolist()
+            #lowKev3 = np.searchsorted(keV, 650)
+            #windowsize = 30 
+            #hits[lowKev2:lowKev3] = np.convolve(hits[lowKev2:lowKev3], np.ones((windowsize,))/windowsize, mode='same').tolist()
+            #lowKev4 = np.searchsorted(keV, 750)
+            #windowsize = 40 
+            #hits[lowKev3:lowKev4] = np.convolve(hits[lowKev3:lowKev4], np.ones((windowsize,))/windowsize, mode='same').tolist()
+
+            # 2 smoothing window size, 1 for each half
+            #windowsize = 10 
+            #hits[:len(hits)//2] = np.convolve(hits[:len(hits)//2], np.ones((windowsize,))/windowsize, mode='same').tolist()
+            #windowsize = 40 
+            #hits[len(hits)//2:] = np.convolve(hits[len(hits)//2:], np.ones((windowsize,))/windowsize, mode='same').tolist()
+
         test_data["hits"].append(hits)
         test_data["spec_name"].append(spectrum)
+
+    return test_data, test_files
+
+
+def load_data(datafile, det, show_data=False):
+    with h5py.File(datafile, 'r') as h5f:
+        assert h5f[det]["spectrum"].shape == h5f[det]["noisy_spectrum"].shape, f'Mismatch between training examples and target examples'
+        dataset = {"name": h5f[det]["name"][()], "keV": h5f[det]["keV"][()], "spectrum": h5f[det]["spectrum"][()], \
+                            "noisy_spectrum": h5f[det]["noisy_spectrum"][()], "noise": h5f[det]["noise"][()], \
+                            "compton_scale": h5f[det]["compton_scale"][()], "SNR": h5f[det]["SNR"][()]}
+    if show_data:
+        plot_data(dataset)
 
     return test_data, test_files
 

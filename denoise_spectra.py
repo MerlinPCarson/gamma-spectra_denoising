@@ -17,7 +17,7 @@ from torch.autograd import Variable
 
 from load_data_real import load_spectra
 from PaperArtifacts import compare_spectra
-from model import DnCNN, DnCNN_Res
+from model import DnCNN, DnCNN_Res, DnCNN_AE
 from train_real import setup_device
 
 
@@ -33,7 +33,7 @@ def save_spectra(test_data, outdir):
 def parse_args():
     parser = argparse. ArgumentParser(description='Gamma-Spectra Denoising')
     parser.add_argument('--dettype', type=str, default='NaI', help='detector type to train {HPGe, NaI, CZT}')
-    parser.add_argument('--spectra', type=str, default='spectra/NaI/Uranium', help='directory of spectra or spectrum in json format')
+    parser.add_argument('--spectra', type=str, default='spectra/NaI/original/charlie', help='directory of spectra or spectrum in json format')
     parser.add_argument('--batch_size', type=int, default=1, help='batch size for denoising')
     parser.add_argument('--model', type=str, default='models/best_model.pt', help='location of model to use')
     parser.add_argument('--outdir', type=str, help='location to save output plots')
@@ -41,6 +41,7 @@ def parse_args():
     parser.add_argument('--saveresults', help='saves output to .h5 and json files', default=True, action='store_true')
     parser.add_argument('--savefigs', help='saves plots of each denoised spectra', default=True, action='store_true')
     parser.add_argument('--showfigs', help='shows plots of each denoised spectra', default=False, action='store_true')
+    parser.add_argument('--smooth', help='smooth noisy spectra before denoising', default=False, action='store_true')
     parser.add_argument('--min_keV', type=float, default=0.0, help='minimum keV to plot')
     parser.add_argument('--max_keV', type=float, default=1500.0, help='maximum keV to plot')
     args = parser.parse_args()
@@ -65,7 +66,7 @@ def main(args):
     assert os.path.exists(args.spectra), f'Cannot find testset spectrum files: {args.spectra}'
 
     print('Loading spectra to denoise')
-    test_data, test_files = load_spectra(args.spectra)
+    test_data, test_files = load_spectra(args.spectra, smooth=args.smooth)
 
     spectra = np.expand_dims(np.array(test_data['hits'], dtype=np.float32), axis=1)
     spectra_keV = np.array(test_data['keV'], dtype=np.float32)
@@ -90,6 +91,10 @@ def main(args):
     # create and load model
     if params['model_name'] == 'DnCNN':
         model = DnCNN(num_channels=params['num_channels'], num_layers=params['num_layers'],
+                      kernel_size=params['kernel_size'], num_filters=params['num_filters'],
+                      dilation_rate=params['dilation_rate']).to(args.device)
+    elif params['model_name'] == 'DnCNN-AE':
+        model = DnCNN_AE(num_channels=params['num_channels'], num_layers=params['num_layers'],
                       kernel_size=params['kernel_size'], num_filters=params['num_filters'],
                       dilation_rate=params['dilation_rate']).to(args.device)
     elif params['model_name'] == 'DnCNN-res':
@@ -150,10 +155,10 @@ def main(args):
     # save denoised data to file, currently only supports entire dataset
     if args.saveresults:
         assert len(spectra_loader) == len(denoised), f'{len(spectra)} examples yet {len(denoised)} denoised' 
-        denoised = np.squeeze(np.array(denoised))
+        denoised = np.squeeze(np.array(denoised), axis=1)
         test_data['denoised_spectrum'] = denoised 
-        outfile = os.path.join(args.outdir, args.outfile)
-        print(f'Saving denoised spectrum to {outfile}')
+        #outfile = os.path.join(args.outdir, args.outfile)
+        #print(f'Saving denoised spectrum to {outfile}')
         #save_dataset(args.dettype.upper(), test_data, outfile)
         save_spectra(test_data, args.outdir)
 

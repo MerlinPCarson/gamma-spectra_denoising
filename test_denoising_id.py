@@ -31,10 +31,11 @@ def get_results(file):
 
 def parse_args():
     parser = argparse. ArgumentParser(description='Gamma-Spectra Denoising testing with SSLCA identification')
-    parser.add_argument('--testset', type=str, default='spectra/NaI/testset.csv', help='csv file of testset spectra locations')
+    parser.add_argument('--testset', type=str, default='spectra/NaI/testset_full.csv', help='csv file of testset spectra locations')
     parser.add_argument('--model', type=str, default='models/best_model.pt', help='location of model to use')
     parser.add_argument('--SSLCA', type=str, default='../DTRA_SSLCA/psu_dtra/SSLCA-RID.py', help='location of SSLCA script')
     parser.add_argument('--nndc_dir', type=str, default='nuclides-nndc', help='location of NNDC radionuclide gamma-ray tables')
+    parser.add_argument('--smooth', help='smooth noisy spectra before denoising', default=False, action='store_true')
 
     return parser.parse_args()
 
@@ -48,7 +49,12 @@ def main(args):
     for ts, mf in zip(testset['directory'], testset['map-file']):
         denoised_outdir = os.path.join(ts, 'denoised')
         os.makedirs(denoised_outdir, exist_ok=True)
-        call(['python', 'denoise_spectra.py', '--model', args.model, '--spectra', ts, '--outdir', denoised_outdir])
+        
+        cmd = ['python', 'denoise_spectra.py', '--model', args.model, '--spectra', ts, '--outdir', denoised_outdir]
+        if args.smooth:
+            cmd.append('--smooth')
+
+        call(cmd)
         denoised_mapfile = os.path.join(denoised_outdir, mf)
         convert_map(os.path.join(ts, mf), denoised_outdir)
 
