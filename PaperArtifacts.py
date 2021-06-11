@@ -18,6 +18,8 @@ def compare_spectra(keV, spectra, titles, min_keV=0, max_keV=1500, outfile=None,
                     savefigs=False, showfigs=True, ylabel='Intensity',
                     colors=None, linestyles=None):
 
+    max_keV = min(keV[-1], max_keV)
+
     if colors is None:
         colors = ['blue', 'red', 'green']
 

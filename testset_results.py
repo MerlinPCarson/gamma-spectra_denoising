@@ -22,7 +22,7 @@ def plot_accuracy(model, SSLCA, SSLCA_BS, outdir):
 
     plt.xticks([0,1,2], ['', '', ''])
     #plt.grid(zorder=0)
-    plt.legend(fancybox=True, shadow=True, fontsize=11, loc='upper right')
+    plt.legend(fancybox=True, shadow=True, fontsize=11, loc='upper left', framealpha=0.6)
     plt.ylabel('Accuracy (%)', font='cmtt10', fontsize=16, fontweight='bold')
     plt.xlabel('SSLCA Results', font='cmtt10', fontsize=16, fontweight='bold')
 
@@ -34,8 +34,8 @@ def plot_accuracy(model, SSLCA, SSLCA_BS, outdir):
     ax.grid(axis='y', which='major', alpha=0.5)
     ax.grid(axis='y', which='minor', alpha=0.2)
 
-    fig = plt.gcf()
-    fig.set_size_inches(8, 6)
+    #fig = plt.gcf()
+    #fig.set_size_inches(8, 6)
 
     plt.tight_layout()
 
@@ -68,7 +68,7 @@ def plot_accuracy_RN(model, SSLCA, SSLCA_BS, outdir):
         plt.bar(locs[idx], results[idx], width = barWidth, color = styles['colors'][idx], 
                 edgecolor='black', hatch=styles['hatch'][idx], label=models[idx], zorder=3)
 
-    plt.legend(fancybox=True, shadow=True, fontsize=11, loc='upper right')
+    plt.legend(fancybox=True, shadow=True, fontsize=11, framealpha=0.6)
     plt.ylabel('Accuracy (%)', font='cmtt10', fontsize=16, fontweight='bold')
     plt.xlabel('SSLCA Results', font='cmtt10', fontsize=16, fontweight='bold')
     plt.xticks([r + barWidth for r in range(len(labels))], labels, fontname='cmtt10', fontsize=12)
@@ -80,6 +80,9 @@ def plot_accuracy_RN(model, SSLCA, SSLCA_BS, outdir):
     ax.set_yticks(np.arange(bottom, top, 2), minor=True)
     ax.grid(axis='y', which='major', alpha=0.5)
     ax.grid(axis='y', which='minor', alpha=0.2)
+
+    #fig = plt.gcf()
+    #fig.set_size_inches(8, 6)
 
     plt.tight_layout()
 
@@ -252,7 +255,7 @@ def plot_accuracy_counts(model, SSLCA, SSLCA_BS, outdir):
     plt.tight_layout()
     fig.set_size_inches(8, 11)
     
-    plt.savefig(os.path.join(outdir, 'resultsCompareSNR.pdf'),format='pdf', dpi=300, bbox_inches='tight', pad_inches=0.5)
+    plt.savefig(os.path.join(outdir, 'resultsCompareHits.pdf'),format='pdf', dpi=300, bbox_inches='tight', pad_inches=0.5)
     plt.show()
 
 def get_val_scatter(incorrect_vals, correct_vals):
@@ -422,7 +425,8 @@ def get_snrs(results):
                 _, hits = data_load_normalized(spec['spectrum'])
                 background = os.path.join(os.path.dirname(spec['spectrum']), 'background.json')
                 _, back_hits = data_load_normalized(background)
-                spec_snr = snr(np.clip(hits-back_hits, a_min=0, a_max=None), back_hits)
+                max_len = min(len(hits), len(back_hits))
+                spec_snr = snr(np.clip(hits[:max_len]-back_hits[:max_len], a_min=0, a_max=None), back_hits)
                 spec['SNR'] = spec_snr 
                 if spec['correct']:
                     correct_snrs.append(spec_snr)
@@ -448,7 +452,8 @@ def get_counts(results):
                 background = os.path.join(os.path.dirname(spec['spectrum']), 'background.json')
                 _, back_hits = data_load_normalized(background)
                 #spec_cnts = np.sum(hits)
-                spec_cnts = np.sum(np.clip(hits-back_hits, a_min=0, a_max=None))
+                max_len = min(len(hits), len(back_hits))
+                spec_cnts = np.sum(np.clip(hits[:max_len]-back_hits[:max_len], a_min=0, a_max=None))
                 #spec_cnts = np.sqrt(np.mean(spec_cnts**2))
                 spec['COUNTS'] = spec_cnts 
                 if spec['correct']:
@@ -506,7 +511,7 @@ def main(args):
 
     results_SSLCA_BS = get_testset_results(args.testset, args.SSLCA_BS_results_dir)
 
-    #plot_results(results_model, results_SSLCA, results_SSLCA_BS, args.model_results_dir)
+    plot_results(results_model, results_SSLCA, results_SSLCA_BS, args.model_results_dir)
 
     print_spectrum_by_metric(results_model, 'SNR')
     print_spectrum_by_metric(results_model, 'counts')

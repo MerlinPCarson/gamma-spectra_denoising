@@ -39,39 +39,11 @@ def load_spectra(spectra, smooth=False):
 
         if smooth:
             print(f'smoothing spectrum {spectrum}')
-            # single window
             windowsize = 10 
-            hits = np.convolve(hits, np.ones((windowsize,))/windowsize, mode='same').tolist()
-
-            # 3 smoothing windows
-            #lowKev1 = np.searchsorted(keV, 450)
-            #lowKev2 = np.searchsorted(keV, 750)
-            #windowsize = 10 
-            #hits[:lowKev1] = np.convolve(hits[:lowKev1], np.ones((windowsize,))/windowsize, mode='same').tolist()
-            #windowsize = 30 
-            #hits[lowKev1:lowKev2] = np.convolve(hits[lowKev1:lowKev2], np.ones((windowsize,))/windowsize, mode='same').tolist()
-            #windowsize = 40 
-            #hits[lowKev2:] = np.convolve(hits[lowKev2:], np.ones((windowsize,))/windowsize, mode='same').tolist()
-
-            # 4 smoothing windows
-            #lowKev1 = np.searchsorted(keV, 450)
-            #windowsize = 10 
-            #hits[:lowKev1] = np.convolve(hits[:lowKev1], np.ones((windowsize,))/windowsize, mode='same').tolist()
-            #lowKev2 = np.searchsorted(keV, 550)
-            #windowsize = 20 
-            #hits[lowKev1:lowKev2] = np.convolve(hits[lowKev1:lowKev2], np.ones((windowsize,))/windowsize, mode='same').tolist()
-            #lowKev3 = np.searchsorted(keV, 650)
-            #windowsize = 30 
-            #hits[lowKev2:lowKev3] = np.convolve(hits[lowKev2:lowKev3], np.ones((windowsize,))/windowsize, mode='same').tolist()
-            #lowKev4 = np.searchsorted(keV, 750)
-            #windowsize = 40 
-            #hits[lowKev3:lowKev4] = np.convolve(hits[lowKev3:lowKev4], np.ones((windowsize,))/windowsize, mode='same').tolist()
-
-            # 2 smoothing window size, 1 for each half
-            #windowsize = 10 
-            #hits[:len(hits)//2] = np.convolve(hits[:len(hits)//2], np.ones((windowsize,))/windowsize, mode='same').tolist()
-            #windowsize = 40 
-            #hits[len(hits)//2:] = np.convolve(hits[len(hits)//2:], np.ones((windowsize,))/windowsize, mode='same').tolist()
+            highKev = np.searchsorted(keV, 1500)
+            hits = np.array(hits)
+            hits[:highKev] = np.convolve(hits[:highKev], np.ones((windowsize,))/windowsize, mode='same').tolist()
+            hits[highKev:] = [0.0] * (len(keV)-highKev)
 
         test_data["hits"].append(hits)
         test_data["spec_name"].append(spectrum)

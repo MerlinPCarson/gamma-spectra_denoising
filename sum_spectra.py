@@ -55,7 +55,7 @@ def save_spectrum(keV, hits, spec_file, outfile):
 
     json.dump(spec, open(outfile, 'w'))
     
-def sum_spectra(spec1, spec2, snr, rn, outfile, showfigs=False, savefigs=False):
+def sum_spectra(spec1, spec2, snr, rn, outfile, showfigs=False, savefigs=False, smooth=True):
 
     # load main signal spectra
     keV, hits1 = data_load_normalized(spec1)
@@ -70,6 +70,19 @@ def sum_spectra(spec1, spec2, snr, rn, outfile, showfigs=False, savefigs=False):
     # generate new spectrum with sum of hits1 and hits2 at SNR params 
     # where hits1 is signal and hits2 is noise
     _ , noisy_spectrum, noise = generate_spectrum_SNR(hits1, hits2, compton_hits, snr)
+
+    if smooth: 
+        # 2 smoothing window size, 1 for each half
+        windowsize = 10 
+        noisy_spectrum[:len(noisy_spectrum)//2] = np.convolve(noisy_spectrum[:len(noisy_spectrum)//2], np.ones((windowsize,))/windowsize, mode='same').tolist()
+        windowsize = 40 
+        noisy_spectrum[len(noisy_spectrum)//2:] = np.convolve(noisy_spectrum[len(noisy_spectrum)//2:], np.ones((windowsize,))/windowsize, mode='same').tolist()
+        plt.plot(keV[:4233], noisy_spectrum[:4233], color='red', linewidth=5.0)
+        plt.axis('off')
+        fig = plt.gcf()
+        fig.set_size_inches(18, 8.5) 
+        plt.savefig('smooth.png', bbox_inches='tight', pad_inches=0)
+        plt.show()
 
     if showfigs or savefigs:
         fig_titles = []
