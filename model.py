@@ -42,8 +42,8 @@ class DnCNN_AE(nn.Module):
 
         padding = 0
         padding_d = 0
-        #padding = int((kernel_size-1)/2)
-        #padding_d = math.floor((kernel_size + (kernel_size-1) * (dilation_rate-1))/2)
+        padding_t = 0
+        output_pad = 0
 
         assert ((num_layers-2) % 2) == 0, 'Must be even number of layers to attain correct output size!'
 
@@ -53,12 +53,14 @@ class DnCNN_AE(nn.Module):
         self.layers.append(nn.LeakyReLU())
         # dimensionality reduction
         for i in range((num_layers-2)//2):
-            self.layers.append(nn.Conv1d(in_channels=num_filters, dilation=dilation_rate, out_channels=num_filters, stride=stride, kernel_size=kernel_size, padding=padding_d, bias=False))
+            self.layers.append(nn.Conv1d(in_channels=num_filters, dilation=dilation_rate, out_channels=num_filters, stride=stride, kernel_size=kernel_size, 
+                               padding=padding_d, bias=False))
             self.layers.append(nn.BatchNorm1d(num_filters))
             self.layers.append(nn.LeakyReLU())
         # dimensionality increase 
         for i in range((num_layers-2)//2):
-            self.layers.append(nn.ConvTranspose1d(in_channels=num_filters, dilation=dilation_rate, out_channels=num_filters, stride=stride, kernel_size=kernel_size, padding=padding_d, bias=False))
+            self.layers.append(nn.ConvTranspose1d(in_channels=num_filters, dilation=dilation_rate, out_channels=num_filters, stride=stride, kernel_size=kernel_size, 
+                               output_padding=output_pad, padding=padding_t, bias=False))
             self.layers.append(nn.BatchNorm1d(num_filters))
             self.layers.append(nn.LeakyReLU())
         self.layers.append(nn.ConvTranspose1d(in_channels=num_filters, out_channels=num_channels, stride=stride, kernel_size=kernel_size, padding=padding, bias=False))
